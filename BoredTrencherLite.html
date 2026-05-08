@@ -1,0 +1,2907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wallet Story — Solana Wallet Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0f12;--bg2:#13161a;--bg3:#1a1d22;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#e8eaed;--text2:#8a8f98;--text3:#52575f;
+  --green:#14F195;--gdim:rgba(20,241,149,0.1);--gtext:#0db872;
+  --red:#ff5c5c;--rdim:rgba(255,92,92,0.1);--rtext:#cc4444;
+  --amber:#f5c842;--adim:rgba(245,200,66,0.1);--atext:#a07800;
+  --purple:#9945ff;--pdim:rgba(153,69,255,0.1);--ptext:#7722cc;
+  --blue:#3b82f6;--bdim:rgba(59,130,246,0.1);--btext:#1d5bbf;
+  --r:10px;--rs:6px;
+}
+html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'Syne',sans-serif}
+body{display:flex;flex-direction:column;align-items:center;padding:0 16px 80px}
+
+nav{width:100%;max-width:900px;display:flex;align-items:center;justify-content:space-between;padding:20px 0;border-bottom:0.5px solid var(--border);margin-bottom:24px}
+.nb{display:flex;align-items:center;gap:10px}
+.logo{width:34px;height:34px;background:var(--green);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.bt{font-size:16px;font-weight:700;letter-spacing:-0.02em}
+.bs{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);margin-top:2px}
+.nbadge{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:4px 11px;border:0.5px solid var(--border2);border-radius:99px;color:var(--text3)}
+.sdot{width:7px;height:7px;background:var(--green);border-radius:50%;display:inline-block;margin-right:5px;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.35}}
+
+main{width:100%;max-width:900px}
+
+/* MODE TABS */
+.mode-tabs{display:flex;gap:0;margin-bottom:20px;border:0.5px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--bg2)}
+.mode-tab{flex:1;padding:12px 20px;font-family:'Syne',sans-serif;font-size:13px;font-weight:600;cursor:pointer;background:none;border:none;color:var(--text2);transition:all 0.15s;text-align:center}
+.mode-tab.active{background:var(--green);color:#050505}
+.mode-tab:hover:not(.active){background:var(--bg3);color:var(--text)}
+
+/* SHARED SETUP */
+.setup{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);padding:20px 24px;margin-bottom:14px}
+.setup-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.setup-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.09em;color:var(--text3)}
+.setup-status{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3)}
+.setup-status.ready{color:var(--gtext)}
+.setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field-lbl{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:6px}
+.field-lbl span{color:var(--gtext)}
+input[type=password],input[type=text],input[type=datetime-local]{width:100%;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:10px 13px;background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--rs);color:var(--text);outline:none;transition:border-color 0.15s}
+input:focus{border-color:var(--green)}
+input::placeholder{color:var(--text3)}
+.field-hint{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);margin-top:5px}
+.field-hint a{color:var(--green);text-decoration:none}
+.save-row{margin-top:12px;display:flex;align-items:center;justify-content:space-between}
+.save-btn{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:7px 16px;background:var(--green);color:#050505;border:none;border-radius:6px;cursor:pointer;font-weight:600}
+.save-msg{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3)}
+
+/* SEARCH */
+.search-wrap{margin-bottom:10px}
+.search-row{display:flex;gap:8px}
+.search-row input[type=text]{font-size:13px;padding:12px 16px;border-radius:var(--r);background:var(--bg2);border-color:var(--border)}
+.go-btn{padding:12px 26px;background:var(--green);color:#050505;border:none;border-radius:var(--r);font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:opacity 0.15s,transform 0.1s}
+.go-btn:hover{opacity:0.87}
+.go-btn:active{transform:scale(0.97)}
+.go-btn:disabled{opacity:0.3;cursor:not-allowed;transform:none}
+
+.chip-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:20px}
+.chip-lbl{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3)}
+.chip{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:4px 13px;border:0.5px solid var(--border2);border-radius:99px;color:var(--text2);cursor:pointer;background:none;transition:border-color 0.15s,color 0.15s}
+.chip:hover{border-color:var(--green);color:var(--green)}
+
+/* LOADING */
+.loading{display:none;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);padding:18px 24px;margin-bottom:14px;gap:14px;align-items:flex-start}
+.spinner{width:16px;height:16px;border:1.5px solid var(--border2);border-top-color:var(--green);border-radius:50%;animation:spin 0.75s linear infinite;flex-shrink:0;margin-top:2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.steps{display:flex;flex-direction:column;gap:4px}
+.step{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3);transition:color 0.25s}
+.step.active{color:var(--green)}
+.step.done{color:var(--text2)}
+.step.done::before{content:'ok ';color:var(--gtext)}
+
+.err{display:none;padding:14px 18px;background:var(--rdim);border:0.5px solid rgba(255,92,92,0.25);border-radius:var(--r);font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--red);margin-bottom:14px;line-height:1.7}
+.result{display:none}
+
+/* SHARED SECTION STYLES */
+.section{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);margin-bottom:12px;overflow:hidden}
+.sec-hd{padding:10px 24px;border-bottom:0.5px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:0.09em;color:var(--text3);background:var(--bg3);display:flex;align-items:center;justify-content:space-between}
+.sec-count{background:rgba(255,255,255,0.06);border-radius:99px;padding:1px 8px;color:var(--text2);font-size:9px}
+
+
+/* INTELLIGENCE */
+.sigs{padding:16px 24px;display:flex;flex-direction:column;gap:13px}
+.sig{display:flex;align-items:flex-start;gap:12px}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:6px}
+.dg{background:var(--green)}.dr{background:var(--red)}.da{background:var(--amber)}.db{background:var(--blue)}
+.sig-txt{font-size:13px;color:var(--text2);line-height:1.72}
+
+/* WALLET STORY (existing styles) */
+.w-hdr{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);padding:22px 24px;margin-bottom:12px}
+.w-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+.w-addr{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3);word-break:break-all;flex:1;line-height:1.6}
+.badge{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;padding:4px 12px;border-radius:99px;flex-shrink:0}
+.b-degen{background:var(--gdim);color:var(--gtext)}.b-smart{background:var(--adim);color:var(--atext)}
+.b-bot{background:var(--rdim);color:var(--rtext)}.b-whale{background:var(--pdim);color:var(--ptext)}.b-unknown{background:var(--bg3);color:var(--text2)}
+.verdict{font-size:19px;font-weight:700;letter-spacing:-0.025em;line-height:1.3;margin-bottom:8px}
+.verdict-sub{font-size:13px;color:var(--text2);line-height:1.75}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.metric{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--rs);padding:14px 16px}
+.m-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.07em;color:var(--text3);margin-bottom:6px}
+.m-val{font-size:20px;font-weight:700;letter-spacing:-0.03em;color:var(--text)}
+.m-val.green{color:var(--green)}.m-val.red{color:var(--red)}.m-val.amber{color:var(--amber)}
+.pnl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px 24px}
+.pnl-card{background:var(--bg3);border-radius:var(--rs);padding:12px 14px}
+.pnl-label{font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.07em;color:var(--text3);margin-bottom:6px}
+.pnl-value{font-size:18px;font-weight:700;letter-spacing:-0.02em;color:var(--text)}
+.pnl-value.pos{color:var(--green)}.pnl-value.neg{color:var(--red)}
+.tok-row{display:grid;grid-template-columns:1fr 80px 80px 90px 60px;align-items:center;gap:8px;padding:10px 24px;border-bottom:0.5px solid var(--border);font-size:12px}
+.tok-row:last-child{border-bottom:none}.tok-row:hover{background:var(--bg3)}
+.tok-name{font-weight:600;color:var(--text)}.tok-sub{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);margin-top:2px}
+.tok-num{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text2);text-align:right}
+.tok-pnl{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;text-align:right}
+.tok-pnl.pos{color:var(--green)}.tok-pnl.neg{color:var(--red)}
+.result-pill{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500;padding:3px 9px;border-radius:99px;display:inline-block;float:right}
+.rp-win{background:var(--gdim);color:var(--gtext)}.rp-loss{background:var(--rdim);color:var(--rtext)}.rp-hold{background:var(--pdim);color:var(--ptext)}
+.tbl-hdr{display:grid;grid-template-columns:1fr 80px 80px 90px 60px;gap:8px;padding:8px 24px;font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.07em;color:var(--text3);border-bottom:0.5px solid var(--border)}
+.bals{padding:16px 24px;display:flex;flex-direction:column;gap:11px}
+.bal{display:flex;align-items:center;justify-content:space-between}
+.bal-l{display:flex;flex-direction:column;gap:2px}.bal-sym{font-size:13px;font-weight:600}
+.bal-amt{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3)}.bal-usd{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500}
+.sol-sep{border-bottom:0.5px solid var(--border);padding-bottom:11px}
+.tx{display:grid;grid-template-columns:36px 1fr 100px 80px 28px;align-items:center;gap:10px;padding:11px 24px;border-bottom:0.5px solid var(--border);transition:background 0.1s}
+.tx-link{display:flex;align-items:center;justify-content:center;opacity:0.35;transition:opacity 0.15s}
+.tx-link:hover{opacity:1}
+.tx-link svg{display:block}
+.tx:last-child{border-bottom:none}.tx:hover{background:var(--bg3)}
+.tx-ic{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500;flex-shrink:0}
+.ic-swap{background:var(--pdim);color:var(--ptext)}.ic-in{background:var(--gdim);color:var(--gtext)}.ic-out{background:var(--rdim);color:var(--rtext)}.ic-other{background:var(--bg3);color:var(--text3)}
+.tx-desc{font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tx-time{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6b7fa3;margin-top:2px}
+.tx-val{font-family:'IBM Plex Mono',monospace;font-size:11px;text-align:right}
+.tx-val.pos{color:var(--gtext)}.tx-val.neg{color:var(--rtext)}.tx-val.neutral{color:var(--text3)}
+.tx-pill{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500;padding:3px 9px;border-radius:99px;text-transform:uppercase;display:inline-block;float:right}
+.p-swap{background:var(--pdim);color:var(--ptext)}.p-transfer{background:var(--gdim);color:var(--gtext)}.p-other{background:var(--bg3);color:var(--text3)}
+.rfooter{display:flex;align-items:center;justify-content:space-between;padding:16px 0 0;border-top:0.5px solid var(--border);margin-top:4px}
+.cost{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3)}
+.pbtn{display:flex;align-items:center;gap:8px;padding:10px 18px;background:var(--green);color:#050505;border:none;border-radius:var(--rs);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer}
+.pbtn:hover{opacity:0.87}
+.empty{padding:16px 24px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text3)}
+.notice{padding:12px 24px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--atext);background:var(--adim);border-top:0.5px solid rgba(245,200,66,0.2);line-height:1.6}
+.transfer-row{display:flex;align-items:center;justify-content:space-between;padding:10px 24px;border-bottom:0.5px solid var(--border);gap:12px}
+.transfer-row:last-child{border-bottom:none}
+.transfer-row:hover{background:var(--bg3)}
+      '<div style="padding:8px 24px 4px;font-family:monospace;font-size:10px;color:var(--text3)">These tokens left this wallet via transfer rather than a DEX sale. The destination wallet may be where the sell happens.</div>'+
+.transfer-btn{font-family:monospace;font-size:10px;font-weight:600;padding:5px 13px;border:none;border-radius:99px;color:#050505;background:var(--green);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:opacity 0.15s}
+.transfer-btn:hover{opacity:0.8}
+.pfooter{margin-top:48px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);line-height:2}
+
+/* API GUIDE */
+.ag-tab{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:8px 16px;background:none;border:none;border-right:0.5px solid var(--border);cursor:pointer;color:var(--text3);transition:color 0.15s,background 0.15s}
+.ag-tab:hover{color:var(--text);background:var(--bg3)}
+.ag-tab-active{color:var(--green);background:var(--bg3)}
+.ag-table{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:10px}
+.ag-table th{text-align:left;color:var(--text3);font-size:9px;text-transform:uppercase;letter-spacing:0.07em;padding:0 10px 8px 0;border-bottom:0.5px solid var(--border);font-weight:500}
+.ag-table td{padding:7px 10px 7px 0;border-bottom:0.5px solid rgba(255,255,255,0.04);color:var(--text2);vertical-align:top;line-height:1.5}
+.ag-table tr:last-child td{border-bottom:none}
+.ag-api{font-size:9px;font-weight:600;padding:2px 7px;border-radius:99px;white-space:nowrap;display:inline-block}
+.ag-api.helius{background:rgba(153,69,255,0.12);color:#a06bff}
+.ag-api.birdeye{background:rgba(59,130,246,0.12);color:var(--blue)}
+.ag-api.anthropic{background:rgba(245,200,66,0.12);color:var(--amber)}
+.ag-api.free{background:rgba(20,241,149,0.1);color:var(--gtext)}
+.ag-cost{color:var(--text);font-weight:600;white-space:nowrap}
+.ag-table tr.ag-total td{border-top:0.5px solid var(--border2);color:var(--text);padding-top:9px}
+.ag-table code{font-family:'IBM Plex Mono',monospace;font-size:9px;background:var(--bg3);padding:1px 5px;border-radius:3px;color:var(--text2)}
+
+/* DEPTH PICKER */
+.depth-picker{background:var(--bg2);border:0.5px solid var(--border2);border-radius:var(--r);padding:22px 24px;margin-bottom:14px;display:none}
+.depth-picker-title{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text2);margin-bottom:4px;font-weight:600}
+.depth-picker-sub{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:16px;line-height:1.6}
+.depth-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.depth-chip{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:8px 18px;border:0.5px solid var(--border2);border-radius:99px;color:var(--text2);cursor:pointer;background:none;transition:all 0.15s}
+.depth-chip:hover{border-color:var(--green);color:var(--green)}
+.depth-chip.selected{border-color:var(--green);background:var(--gdim);color:var(--green)}
+.depth-confirm-row{display:flex;align-items:center;gap:12px}
+.depth-confirm-btn{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;padding:10px 26px;background:var(--green);color:#050505;border:none;border-radius:var(--r);cursor:pointer;transition:opacity 0.15s}
+.depth-confirm-btn:hover{opacity:0.87}
+.depth-cancel-btn{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:10px 16px;border:0.5px solid var(--border2);border-radius:var(--r);color:var(--text3);background:none;cursor:pointer}
+.depth-cancel-btn:hover{color:var(--text);border-color:var(--border2)}
+.depth-note{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);margin-left:auto}
+.back-btn{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:6px 14px;border:0.5px solid var(--border2);border-radius:99px;color:var(--text2);background:none;cursor:pointer;margin-bottom:16px}
+.back-btn:hover{border-color:var(--green);color:var(--green)}
+@media(max-width:600px){.metrics,.ts-stats{grid-template-columns:repeat(2,1fr)}.how-steps,.setup-grid,.ts-inputs{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nb">
+    <div style="width:32px;height:32px;background:linear-gradient(135deg,#9945FF 0%,#14F195 100%);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="16" height="13" viewBox="0 0 16 13" fill="none"><rect x="0" y="0" width="16" height="2.2" rx="1.1" fill="#050505"/><rect x="0" y="5.4" width="11" height="2.2" rx="1.1" fill="#050505"/><rect x="0" y="10.8" width="7" height="2.2" rx="1.1" fill="#050505"/></svg></div>
+    <div><div class="bt" style="font-size:16px;font-weight:800;letter-spacing:-0.02em">BoredTrencher <span style="font-size:9px;font-weight:700;background:#e53e3e;color:#fff;padding:2px 6px;border-radius:4px;letter-spacing:0.06em;vertical-align:middle;margin-left:4px">BETA</span></div><div class="bs" style="font-family:'IBM Plex Mono',monospace;font-size:9px;margin-top:1px">Solana on-chain intelligence</div></div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <span class="nbadge"><span class="sdot"></span>Solana mainnet</span>
+    <span class="nbadge" style="color:var(--text3)">v0.5</span>
+    <span class="nbadge" style="color:var(--amber);border-color:rgba(245,200,66,0.4);letter-spacing:0.04em" id="buildBadge">lite</span>
+  </div>
+</nav>
+<main>
+
+<!-- MODE TABS -->
+<div class="mode-tabs">
+  <button class="mode-tab active" id="tab-wallet" onclick="switchMode('wallet')">Wallet Story</button>
+  <button class="mode-tab" id="tab-watch" onclick="switchMode('watch')">Watchlist <span id="watchBadge" style="display:none;background:var(--red);color:#fff;border-radius:99px;padding:1px 6px;font-size:9px;margin-left:4px"></span></button>
+</div>
+
+<!-- SETUP (shared) -->
+<div class="setup">
+  <div class="setup-hdr"><div class="setup-lbl">API Keys</div><div class="setup-status" id="setupStatus">not configured</div></div>
+  <div class="setup-grid">
+    <div>
+      <div class="field-lbl"><span>Required</span> - Helius API key</div>
+      <input type="password" id="heliusKey" placeholder="helius-api-key" oninput="checkSetup()" onchange="checkSetup()" onblur="checkSetup()"/>
+      <div class="field-hint">Free at <a href="https://dashboard.helius.dev" target="_blank">dashboard.helius.dev</a></div>
+    </div>
+
+    <div id="anthropicKeySection">
+      <div class="field-lbl"><span>Optional</span> - Anthropic API key
+        <span style="float:right;display:flex;align-items:center;gap:6px">
+          <span style="font-size:9px;color:var(--text3)" id="aiToggleLabel">AI Analysis: OFF</span>
+          <label style="position:relative;display:inline-block;width:32px;height:18px;cursor:pointer">
+            <input type="checkbox" id="aiToggle" onchange="updateAiToggle()" style="opacity:0;width:0;height:0">
+            <span id="aiToggleTrack" style="position:absolute;inset:0;background:var(--bg3);border-radius:99px;transition:0.2s"></span>
+            <span id="aiToggleThumb" style="position:absolute;left:3px;top:3px;width:12px;height:12px;background:#050505;border-radius:50%;transition:0.2s"></span>
+          </label>
+        </span>
+      </div>
+      <input type="password" id="anthropicKey" placeholder="sk-ant-... (optional)" oninput="checkSetup()"/>
+      <div class="field-hint">Wallet Story AI analysis · get a key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></div>
+    </div>
+  </div>
+  <div class="save-row">
+    <button class="save-btn" onclick="saveKeys()">Save keys</button>
+    <span class="save-msg" id="saveMsg"></span>
+  </div>
+  <div style="margin-top:10px;font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.7">
+    <div style="color:#7b8fa8;margin-bottom:2px">BoredTrencher is an independent project — not affiliated with, endorsed by, or associated with Helius or Birdeye in any way.</div>
+    <div style="color:var(--text3)">Your API keys are stored in your browser only · Never sent to our servers · Live on-chain data · Not financial advice</div>
+  </div>
+</div>
+
+<!-- WALLET STORY PANEL -->
+<div id="walletPanel">
+  <div class="search-wrap">
+    <div class="search-row">
+      <input type="text" id="walletInput" placeholder="Paste any Solana wallet address..."/>
+      <button class="go-btn" id="wGoBtn" onclick="goWallet()">Analyse</button>
+    </div>
+  </div>
+  <!-- AI VERDICT DISCLAIMER -->
+  <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 14px;background:var(--adim);border:0.5px solid rgba(245,200,66,0.2);border-radius:var(--rs);margin-bottom:12px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--atext);line-height:1.65">
+    <span style="flex-shrink:0;font-size:12px;margin-top:1px">✦</span>
+    <span><strong style="color:var(--amber)">AI verdict (optional)</strong> — Claude reads the on-chain data and writes a plain-English summary and its opinion of what this wallet is actually doing. Requires an Anthropic API key. Not financial advice.</span>
+  </div>
+
+  <!-- DEPTH PICKER — shown before any fetch begins -->
+  <div class="depth-picker" id="depthPicker">
+    <div class="depth-picker-title">How far back do you want to look?</div>
+    <div class="depth-picker-sub">More transactions = deeper PnL analysis, but uses more API credits and takes longer.</div>
+    <div class="depth-chips">
+      <button class="depth-chip selected" data-depth="1000" onclick="selectDepth(this)">1,000 txs</button>
+      <button class="depth-chip" data-depth="2000" onclick="selectDepth(this)">2,000 txs</button>
+      <button class="depth-chip" data-depth="5000" onclick="selectDepth(this)">5,000 txs</button>
+      <button class="depth-chip" data-depth="10000" onclick="selectDepth(this)">10,000 txs</button>
+    </div>
+    <div class="depth-confirm-row">
+      <button class="depth-confirm-btn" onclick="confirmDepthAndRun()">Confirm &amp; Analyse</button>
+      <button class="depth-cancel-btn" onclick="cancelDepth()">Cancel</button>
+      <span class="depth-note" id="depthNote">~10 pages · ~5s</span>
+    </div>
+  </div>
+
+  <div class="loading" id="wLoadingEl"><div class="spinner"></div><div class="steps"><div class="step" id="ws0">Fetching transaction history...</div><div class="step" id="ws1">Loading token balances...</div><div class="step" id="ws2">Analysing transactions...</div><div class="step" id="ws3">Checking wallet identity...</div><div class="step" id="ws4">Claude is writing the story...</div></div></div>
+  <div class="err" id="wErrEl"></div>
+  <div class="result" id="wResultEl"></div>
+</div>
+
+<!-- WATCHLIST PANEL -->
+<div id="watchPanel" style="display:none">
+  <div class="section" style="margin-bottom:14px">
+    <div class="sec-hd">Add wallet to watchlist</div>
+    <div style="padding:16px 24px;display:flex;flex-direction:column;gap:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <div class="field-lbl">Wallet address</div>
+          <input type="text" id="watchAddr" placeholder="Solana wallet address..."/>
+        </div>
+        <div>
+          <div class="field-lbl">Nickname (optional)</div>
+          <input type="text" id="watchNick" placeholder="e.g. Smart Money 1"/>
+        </div>
+      </div>
+
+      <!-- Alert type toggles -->
+      <div>
+        <div class="field-lbl" style="margin-bottom:10px">Alert on — tick any combination</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+
+          <!-- Buys row -->
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--rs)">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex:0 0 90px">
+              <input type="checkbox" id="watchAlertBuys" checked style="width:14px;height:14px;accent-color:var(--green);cursor:pointer"/>
+              <span style="font-family:monospace;font-size:11px;color:var(--text)">Buys</span>
+            </label>
+            <div style="font-family:monospace;font-size:10px;color:var(--text3);flex:0 0 60px">Min size:</div>
+            <select id="watchMinSolBuys" style="font-family:monospace;font-size:11px;padding:5px 10px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--rs);color:var(--text);outline:none">
+              <option value="0">Any size</option>
+              <option value="1">&gt; 1 SOL</option>
+              <option value="3">&gt; 3 SOL</option>
+              <option value="5">&gt; 5 SOL</option>
+              <option value="10">&gt; 10 SOL</option>
+            </select>
+          </div>
+
+          <!-- Sells row -->
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--rs)">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex:0 0 90px">
+              <input type="checkbox" id="watchAlertSells" style="width:14px;height:14px;accent-color:var(--green);cursor:pointer"/>
+              <span style="font-family:monospace;font-size:11px;color:var(--text)">Sells</span>
+            </label>
+            <div style="font-family:monospace;font-size:10px;color:var(--text3);flex:0 0 60px">Min size:</div>
+            <select id="watchMinSolSells" style="font-family:monospace;font-size:11px;padding:5px 10px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--rs);color:var(--text);outline:none">
+              <option value="0">Any size</option>
+              <option value="1">&gt; 1 SOL</option>
+              <option value="3">&gt; 3 SOL</option>
+              <option value="5">&gt; 5 SOL</option>
+              <option value="10">&gt; 10 SOL</option>
+            </select>
+          </div>
+
+          <!-- SOL Deposits row -->
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--rs)">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex:0 0 90px">
+              <input type="checkbox" id="watchAlertDeposits" style="width:14px;height:14px;accent-color:var(--green);cursor:pointer"/>
+              <span style="font-family:monospace;font-size:11px;color:var(--text)">Deposits</span>
+            </label>
+            <div style="font-family:monospace;font-size:10px;color:var(--text3);flex:0 0 60px">Min size:</div>
+            <select id="watchMinSolDeposits" style="font-family:monospace;font-size:11px;padding:5px 10px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--rs);color:var(--text);outline:none">
+              <option value="1">&gt; 1 SOL</option>
+              <option value="3">&gt; 3 SOL</option>
+              <option value="5">&gt; 5 SOL</option>
+              <option value="10">&gt; 10 SOL</option>
+            </select>
+          </div>
+
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;align-items:center">
+        <button class="go-btn" onclick="addToWatchlist()" style="padding:10px 24px;font-size:12px">Add to watchlist</button>
+        <span id="watchAddMsg" style="font-family:monospace;font-size:11px;color:var(--text3)"></span>
+      </div>
+    </div>
+  </div>
+
+  <div id="watchControls" style="display:none;flex-direction:column;gap:10px;margin-bottom:12px">
+
+    <!-- Live polling row -->
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="font-family:monospace;font-size:10px;color:var(--text3)" id="pollStatus">Polling paused</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="checkAllNow()" style="font-family:monospace;font-size:11px;padding:6px 14px;border:0.5px solid var(--border2);border-radius:6px;color:var(--text2);background:none;cursor:pointer">Check all now</button>
+        <button id="pollBtn" onclick="togglePolling()" style="font-family:monospace;font-size:11px;padding:6px 14px;border:none;border-radius:6px;color:#050505;background:var(--green);cursor:pointer">Start alerts</button>
+      </div>
+    </div>
+
+    <!-- Scan back row -->
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--rs)">
+      <div style="font-family:monospace;font-size:10px;color:var(--text3);flex-shrink:0">Scan back:</div>
+      <select id="scanPeriod" style="font-family:monospace;font-size:11px;padding:5px 10px;background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--rs);color:var(--text);outline:none">
+        <option value="1">Last 1 hour</option>
+        <option value="2">Last 2 hours</option>
+        <option value="6">Last 6 hours</option>
+        <option value="12">Last 12 hours</option>
+      </select>
+      <button onclick="scanAllWallets()" style="font-family:monospace;font-size:11px;padding:6px 16px;border:none;border-radius:6px;color:#050505;background:var(--amber);cursor:pointer;font-weight:600">Scan all wallets</button>
+      <div style="font-family:monospace;font-size:10px;color:var(--text3);flex:1;text-align:right" id="scanStatus"></div>
+    </div>
+
+  </div>
+
+  <div id="watchAlerts" style="display:none;margin-bottom:12px"></div>
+  <div id="watchList"></div>
+</div>
+
+
+<div class="pfooter">Wallet Story v0.5 — Helius · Claude (optional) · Solana mainnet<br>Live on-chain data · Not financial advice</div>
+</main>
+
+<script>
+var WSOL = 'So11111111111111111111111111111111111111112';
+
+var RENT_SOURCES = ['SYSTEM_PROGRAM','SOLANA_PROGRAM_LIBRARY'];
+var INCINERATOR = '1nc1nerator11111111111111111111111111111111';
+var STABLES = {
+  'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB':'USDT',
+  'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v':'USDC',
+  'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm':'WIF',
+  '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E':'BTC',
+  '7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs':'ETH',
+  'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So':'mSOL',
+  'bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1':'bSOL'
+};
+
+var currentMode = 'wallet';
+
+// ─── Unified swap / bonding-curve detection ───────────────────────────────────
+// Pump.fun bonding-curve buys (pre-graduation) arrive from Helius as:
+//   source = PUMP_FUN  (or PUMP_AMM / PUMP_SWAP / PUMPSWAP)
+//   type   = UNKNOWN | TRANSFER | BUY | SELL  (NOT "SWAP")
+// They also sometimes come with type=BUY/SELL and source=PUMP_FUN.
+// This single function is the canonical truth used everywhere in the app.
+function isTradeLike(tx) {
+  var t = (tx.type   || '').toUpperCase();
+  var s = (tx.source || '').toUpperCase();
+  // Classic DEX swaps
+  if (t.indexOf('SWAP') >= 0)    return true;
+  if (t.indexOf('DEX')  >= 0)    return true;
+  // Named DEX sources
+  if (s.indexOf('JUPITER')  >= 0) return true;
+  if (s.indexOf('RAYDIUM')  >= 0) return true;
+  if (s.indexOf('ORCA')     >= 0) return true;
+  if (s.indexOf('METEORA')  >= 0) return true;
+  if (s.indexOf('PHOENIX')  >= 0) return true;
+  if (s.indexOf('DFLOW')    >= 0) return true;
+  if (s.indexOf('OKX')     >= 0) return true;
+  if (s.indexOf('ZEROFI')  >= 0) return true;
+  if (s.indexOf('TROJAN')  >= 0) return true;
+  if (s.indexOf('PHOTON')  >= 0) return true;
+  if (s.indexOf('BULLX')   >= 0) return true;
+  if (s.indexOf('LIFINITY') >= 0) return true;
+  if (s.indexOf('BONKBOT') >= 0) return true;
+  if (s.indexOf('MAESTRO') >= 0) return true;
+  // Pump.fun — catches bonding-curve AND post-graduation PumpSwap
+  if (s.indexOf('PUMP') >= 0)    return true;
+  var desc = (tx.description || '').toUpperCase();
+  if (desc.indexOf(' SWAP') >= 0 && desc.indexOf(' FOR ') >= 0) return true;
+  if (desc.indexOf('OKX') >= 0) return true;
+  if (desc.indexOf('ZEROFI') >= 0) return true;
+  // Pump.fun BUY/SELL type (bonding curve, sometimes source=PUMP_FUN)
+  if ((t === 'BUY' || t === 'SELL') && s.indexOf('PUMP') >= 0) return true;
+  // Catch UNKNOWN type where token + SOL both move (likely bonding curve)
+  if (t === 'UNKNOWN' || t === 'BUY' || t === 'SELL') {
+    var tt = tx.tokenTransfers || [];
+    var nt = tx.nativeTransfers || [];
+    var hasTokenMove = tt.some(function(tf) { return tf.mint && tf.mint !== WSOL; });
+    var hasSolMove   = nt.some(function(n)  { return n.amount >= 100000; });
+    if (hasTokenMove && hasSolMove) return true;
+    // Also catch WSOL-funded token buys (no native SOL move, but WSOL + token both transfer)
+    var hasWsolMove  = tt.some(function(tf) { return tf.mint === WSOL && Number(tf.tokenAmount) >= 0.0001; });
+    if (hasTokenMove && hasWsolMove) return true;
+  }
+  // Catch any transaction where a significant WSOL transfer accompanies a non-WSOL token transfer
+  // (covers stablecoin→token and WSOL→token swaps that arrive with type=TRANSFER etc.)
+  if (t !== 'SYSTEM_PROGRAM') {
+    var tt2 = tx.tokenTransfers || [];
+    var hasNonWsolToken = tt2.some(function(tf) { return tf.mint && tf.mint !== WSOL; });
+    var hasSigWsol = tt2.some(function(tf) { return tf.mint === WSOL && Number(tf.tokenAmount) >= 0.001; });
+    if (hasNonWsolToken && hasSigWsol) return true;
+  }
+  return false;
+}
+
+// Depth picker state
+var _depthLimit = 1000;          // how many txs to fetch (set by picker)
+var _pendingWalletAddr = null;   // wallet queued while picker is shown
+
+function switchMode(mode) {
+  currentMode = mode;
+  document.getElementById('tab-wallet').className = 'mode-tab' + (mode==='wallet'?' active':'');
+  document.getElementById('tab-watch').className = 'mode-tab' + (mode==='watch'?' active':'');
+  document.getElementById('walletPanel').style.display = mode==='wallet' ? 'block' : 'none';
+  document.getElementById('watchPanel').style.display = mode==='watch' ? 'block' : 'none';
+  if(mode==='watch') renderWatchlist();
+}
+
+function setWindow(mins) {
+  var now = new Date();
+  var from = new Date(now.getTime() - mins * 60000);
+  document.getElementById('timeTo').value = toLocalInput(now);
+  document.getElementById('timeFrom').value = toLocalInput(from);
+}
+
+function toLocalInput(d) {
+  var pad = function(n){ return n.toString().padStart(2,'0'); };
+  return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes());
+}
+
+// KEY MANAGEMENT
+
+function saveKeys() {
+  var h=document.getElementById('heliusKey').value.trim();
+  var a=document.getElementById('anthropicKey').value.trim();
+  var msg=document.getElementById('saveMsg');
+  if(!h){msg.textContent='Helius key is required';msg.style.color='var(--red)';return;}
+  try{
+    localStorage.setItem('ws_h',h);
+    if(a)localStorage.setItem('ws_a',a);else localStorage.removeItem('ws_a');
+    msg.textContent='Keys saved ✓';msg.style.color='var(--gtext)';checkSetup();
+    setTimeout(function(){msg.textContent='';},2500);
+  }catch(e){
+    msg.textContent='Saved for this session (storage unavailable)';msg.style.color='var(--amber)';
+    checkSetup();
+    setTimeout(function(){msg.textContent='';},3000);
+  }
+}
+
+function loadKeys() {
+  try{
+    var h=localStorage.getItem('ws_h')||'';var a=localStorage.getItem('ws_a')||'';
+    if(h)document.getElementById('heliusKey').value=h;
+    if(a)document.getElementById('anthropicKey').value=a;
+    checkSetup();
+  }catch(e){}
+}
+
+function checkSetup() {
+  var h=document.getElementById('heliusKey').value.trim();
+  var a=document.getElementById('anthropicKey').value.trim();
+  var el=document.getElementById('setupStatus');
+  if(!el)return;
+  if(h&&a){el.textContent='fully configured';el.className='setup-status ready';}
+  else if(h){el.textContent='ready';el.className='setup-status ready';}
+  else{el.textContent='Helius key required';el.className='setup-status';}
+}
+
+function updateAiToggle(){
+  var on=document.getElementById('aiToggle').checked;
+  document.getElementById('aiToggleLabel').textContent='AI Analysis: '+(on?'ON':'OFF');
+  document.getElementById('aiToggleTrack').style.background=on?'var(--green)':'var(--bg3)';
+  document.getElementById('aiToggleThumb').style.left=on?'17px':'3px';
+}
+
+function toggleCostGuide(){
+  var body=document.getElementById('costGuideBody');
+  var chevron=document.getElementById('costGuideChevron');
+  if(!body)return;
+  var open=body.style.display!=='none';
+  body.style.display=open?'none':'block';
+  if(chevron)chevron.style.transform=open?'':'rotate(180deg)';
+}
+
+function switchAgTab(tab){
+  ['wallet','token','watch','bigbuy'].forEach(function(t){
+    document.getElementById('agtab-'+t).className='ag-tab'+(t===tab?' ag-tab-active':'');
+    document.getElementById('agpanel-'+t).style.display=t===tab?'block':'none';
+  });
+}
+
+function aiEnabled(){
+  var toggle=document.getElementById('aiToggle');
+  var aKey=document.getElementById('anthropicKey').value.trim();
+  return toggle&&toggle.checked&&aKey.length>0;
+}
+
+window.addEventListener('DOMContentLoaded',function(){
+  loadKeys();setWindow(60);
+  // Re-run checkSetup after a short delay to catch browser password autofill
+  // (autofill populates fields after DOMContentLoaded but doesn't fire oninput)
+  setTimeout(checkSetup, 300);
+  setTimeout(checkSetup, 1200);
+});
+
+// HELPERS
+function shortAddr(a){if(!a||a.length<10)return a;return a.slice(0,6)+'...'+a.slice(-4);}
+function fmt(n,dp){dp=dp||2;if(n==null||isNaN(n))return'--';return Number(n).toFixed(dp);}
+function fmtUsd(n){if(n==null||isNaN(n))return'--';return'$'+Math.round(Math.abs(Number(n))).toLocaleString();}
+function fmtAmt(n){var v=Number(n);if(v>=1000000)return(v/1000000).toFixed(2)+'M';if(v>=1000)return(v/1000).toFixed(1)+'k';return v.toFixed(2);}
+function tsToDate(ts){return new Date(ts*1000);}
+function formatTime(ts){
+  var d=tsToDate(ts);
+  var pad=function(n){return n.toString().padStart(2,'0');};
+  return pad(d.getDate())+'/'+pad(d.getMonth()+1)+' '+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+}
+function timeAgo(ts){
+  if(!ts)return'--';
+  var s=Math.floor((Date.now()-ts*1000)/1000);
+  if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';
+  if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';
+}
+
+function isRentTx(tx){
+  if(!tx)return false;
+  if(RENT_SOURCES.indexOf(tx.source)>=0){
+    // Exempt SYSTEM_PROGRAM / SOLANA_PROGRAM_LIBRARY txs that are actually OTC/P2P token swaps.
+    // These have significant WSOL transfers alongside non-WSOL token transfers — a clear sign
+    // of a real trade even though Helius labels them as TRANSFER/SYSTEM_PROGRAM.
+    var _tt=tx.tokenTransfers||[];
+    var _hasSigWsol=_tt.some(function(t){return t.mint===WSOL&&Number(t.tokenAmount||0)>=0.001;});
+    var _hasNonWsol=_tt.some(function(t){return t.mint&&t.mint!==WSOL;});
+    if(_hasSigWsol&&_hasNonWsol)return false; // it's a swap, not rent
+    return true;
+  }
+  var nt=tx.nativeTransfers||[];
+  for(var i=0;i<nt.length;i++){if(nt[i].toUserAccount===INCINERATOR)return true;}
+  return false;
+}
+
+function setWStep(n,txt,prefix){
+  prefix=prefix||'ws';
+  ['ws0','ws1','ws2','ws3','ws4'].forEach(function(id,i){
+    var e=document.getElementById(prefix+i);if(!e)return;
+    if(i<n)e.className='step done';
+    else if(i===n){e.className='step active';if(txt)e.textContent=txt;}
+    else e.className='step';
+  });
+}
+
+// API CALLS
+async function fetchPage(wallet,key,before){
+  var url='https://api.helius.xyz/v0/addresses/'+wallet+'/transactions?limit=100&api-key='+key;
+  if(before)url+='&before='+before;
+  var r=await fetch(url);
+  if(!r.ok){var t=await r.text().catch(function(){return'';});throw new Error('Helius '+r.status+': '+t.slice(0,80));}
+  return r.json();
+}
+
+async function fetchAllTxs(wallet,key,onProgress){
+  var all=[],before=null,page=0;
+  var limit=_depthLimit||1000;
+  var totalPages=Math.ceil(limit/100);
+  while(all.length<limit){
+    var batch;
+    try{batch=await fetchPage(wallet,key,before);}catch(e){console.warn('Page '+page+' error:',e.message);break;}
+    if(!Array.isArray(batch)||batch.length===0)break;
+    all=all.concat(batch);page++;
+    if(onProgress)onProgress(all.length,page,totalPages);
+    if(batch.length<100)break;
+    var last=batch[batch.length-1];before=last?last.signature:null;
+    if(!before)break;
+    await new Promise(function(res){setTimeout(res,350);});
+  }
+  return all;
+}
+
+async function getPairAddress(mint){
+  // Use DexScreener to find the trading pair address for this token
+  try{
+    var r=await fetch('https://api.dexscreener.com/tokens/v1/solana/'+mint);
+    if(!r.ok)return null;
+    var data=await r.json();
+    var pairs=Array.isArray(data)?data:(data.pairs||[]);
+    // Sort by volume to get the most active pair
+    pairs.sort(function(a,b){return(b.volume&&b.volume.h24||0)-(a.volume&&a.volume.h24||0);});
+    if(pairs.length&&pairs[0].pairAddress){
+      console.log('Found pair address:',pairs[0].pairAddress,'on',pairs[0].dexId);
+      return{pairAddress:pairs[0].pairAddress,tokenName:pairs[0].baseToken&&pairs[0].baseToken.symbol||mint.slice(0,8),dex:pairs[0].dexId};
+    }
+  }catch(e){console.warn('DexScreener pair lookup:',e.message);}
+  return null;
+}
+
+function findOutgoingTransfers(txs, wallet, symCache) {
+  // Find tokens that were transferred OUT to other wallets (not sold via DEX)
+  // These are TRANSFER type txs where wallet sends a token to a non-DEX address
+  var DEX_PROGRAMS = {
+    'JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4': true,
+    'JUP4Fb2cqiRUcaTHdrPC8h2gNsA2ETXiPDD33WcGuJB': true,
+    '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P': true,
+    'Ce6TQqeHB9R8f5gu1YqgmNYJcHLt4HVyFmUXJAqKBhb': true,
+    '9nnLbotNTcUhvbrsA6Mdkx45Sm82G35zo28AqUvjExn8': true,
+    'So11111111111111111111111111111111111111112': true,
+  };
+
+  var transfers = {}; // mint -> { symbol, destinations: {addr: {addr, totalQty, txCount, firstTs}} }
+
+  txs.forEach(function(tx) {
+    if (tx.transactionError) return;
+    var tt = tx.tokenTransfers || [];
+    var isSwap = isTradeLike(tx);
+    if (isSwap) return; // ignore DEX swaps, only care about plain transfers
+
+    tt.forEach(function(t) {
+      if (t.fromUserAccount !== wallet) return; // only outgoing
+      if (!t.mint || t.mint === WSOL) return;
+      if (STABLES[t.mint]) return; // ignore stablecoin transfers
+      if (DEX_PROGRAMS[t.toUserAccount]) return; // ignore transfers to known DEX programs
+      if (!t.toUserAccount || t.toUserAccount === wallet) return;
+
+      var sym = t.symbol || (symCache && symCache[t.mint]) || t.mint.slice(0,8);
+      if (!transfers[t.mint]) transfers[t.mint] = { mint: t.mint, symbol: sym, destinations: {} };
+      var dest = t.toUserAccount;
+      if (!transfers[t.mint].destinations[dest]) {
+        transfers[t.mint].destinations[dest] = { address: dest, totalQty: 0, txCount: 0, firstTs: tx.timestamp };
+      }
+      transfers[t.mint].destinations[dest].totalQty += Number(t.tokenAmount) || 0;
+      transfers[t.mint].destinations[dest].txCount++;
+      if (tx.timestamp < transfers[t.mint].destinations[dest].firstTs) {
+        transfers[t.mint].destinations[dest].firstTs = tx.timestamp;
+      }
+    });
+  });
+
+  // Convert to array, sort destinations by qty
+  return Object.values(transfers).map(function(t) {
+    t.destinations = Object.values(t.destinations)
+      .sort(function(a,b) { return b.totalQty - a.totalQty; })
+      .slice(0, 5); // top 5 destinations per token
+    return t;
+  }).filter(function(t) { return t.destinations.length > 0; });
+}
+
+function buildSymbolCache(txs){
+  var cache={};
+  txs.forEach(function(tx){
+    (tx.tokenTransfers||[]).forEach(function(t){
+      if(t.mint&&t.symbol&&t.symbol.length>0&&t.symbol!==t.mint.slice(0,8)){cache[t.mint]=t.symbol;}
+    });
+  });
+  return cache;
+}
+
+// Build frequency tables used to disambiguate Jupiter ATA-only routing.
+// Returns { freq, wsolTo } where:
+//   freq[addr] = times addr appears in non-Jupiter tokenTransfers (any role)
+//   wsolTo[addr] = times wallet sent WSOL directly to addr in non-Jupiter txs
+// An address with wsolTo > ROUTING_THRESHOLD is a DFlow routing contract (wallet SELLING).
+// An address with freq == 0 is a Jupiter-only pool (wallet SELLING to it).
+// Otherwise the buyer is the wallet's WSOL ATA (wallet BUYING).
+var _ROUTING_WSOL_THRESHOLD=3; // wallet sent WSOL to this address >3 times -> routing contract
+function buildNonJupAtaFreq(txs, wallet){
+  var freq={};var wsolTo={};var tokFreq={};
+  var WSOL_MINT='So11111111111111111111111111111111111111112';
+  var STABLES_SET={'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB':1,'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v':1};
+  txs.forEach(function(tx){
+    var src=(tx.source||'').toUpperCase();
+    if(src.indexOf('JUPITER')>=0)return;
+    (tx.tokenTransfers||[]).forEach(function(t){
+      var addrs=[t.fromUserAccount,t.toUserAccount];
+      addrs.forEach(function(a){if(a&&a!==wallet){freq[a]=(freq[a]||0)+1;}});
+      // Track: wallet sends WSOL to -> routing contract or WSOL ATA
+      if(t.mint===WSOL_MINT&&t.fromUserAccount===wallet&&t.toUserAccount){
+        wsolTo[t.toUserAccount]=(wsolTo[t.toUserAccount]||0)+1;
+      }
+      // Track non-WSOL/non-stable token activity: routing contracts never appear here
+      if(t.mint&&t.mint!==WSOL_MINT&&!STABLES_SET[t.mint]){
+        addrs.forEach(function(a){if(a&&a!==wallet){tokFreq[a]=(tokFreq[a]||0)+1;}});
+      }
+    });
+  });
+  return {freq:freq,wsolTo:wsolTo,tokFreq:tokFreq};
+}
+
+function calcPnL(txs,wallet,symCache){
+  symCache=symCache||{};
+  var books={};
+  txs.forEach(function(tx){
+    if(isRentTx(tx))return;
+    if(tx.transactionError)return;
+    var txType=(tx.type||'').toUpperCase();
+    var txSrc=(tx.source||'').toUpperCase();
+    // Use shared isTradeLike — covers bonding-curve (type=UNKNOWN/BUY/SELL + SOL/token move)
+    if(!isTradeLike(tx))return;
+    var tt=tx.tokenTransfers||[];var nt=tx.nativeTransfers||[];
+    // Use netSOLforDisplay which handles DFlow/Jupiter router pattern, WSOL, swap events
+    var netSOL=netSOLforDisplay(tx,wallet);
+    var _cA=getWalletAddrs(tx,wallet);
+    var sent=tt.filter(function(t){return !!_cA[t.fromUserAccount]&&t.mint!==WSOL;}).sort(function(a,b){return Number(b.tokenAmount)-Number(a.tokenAmount);});
+    var rec=tt.filter(function(t){return !!_cA[t.toUserAccount]&&t.mint!==WSOL;}).sort(function(a,b){return Number(b.tokenAmount)-Number(a.tokenAmount);});
+    if(netSOL<-0.001&&rec.length){
+      var t=rec[0];if(STABLES[t.mint])return;
+      var sym=t.symbol||symCache[t.mint]||t.mint.slice(0,8);
+      if(!books[t.mint])books[t.mint]={symbol:sym,bought:[],sold:[]};
+      if(sym!==t.mint.slice(0,8))books[t.mint].symbol=sym;
+      books[t.mint].bought.push({qty:Number(t.tokenAmount),sol:Math.abs(netSOL)});
+    }else if(netSOL>0.001&&sent.length){
+      var t2=sent[0];if(STABLES[t2.mint])return;
+      var sym2=t2.symbol||symCache[t2.mint]||t2.mint.slice(0,8);
+      if(!books[t2.mint])books[t2.mint]={symbol:sym2,bought:[],sold:[]};
+      if(sym2!==t2.mint.slice(0,8))books[t2.mint].symbol=sym2;
+      books[t2.mint].sold.push({qty:Number(t2.tokenAmount),sol:netSOL});
+    }else if(Math.abs(netSOL)<=0.001&&sent.length&&rec.length&&sent[0].mint!==rec[0].mint){
+      // Token→token: record buy of received token (PnL unreliable without USD price, record qty only with sol=0)
+      var tRec=rec[0];if(!STABLES[tRec.mint]){
+        var symR=tRec.symbol||symCache[tRec.mint]||tRec.mint.slice(0,8);
+        if(!books[tRec.mint])books[tRec.mint]={symbol:symR,bought:[],sold:[]};
+        if(symR!==tRec.mint.slice(0,8))books[tRec.mint].symbol=symR;
+        books[tRec.mint].bought.push({qty:Number(tRec.tokenAmount),sol:0});
+      }
+    }
+  });
+  var results=[];
+  Object.keys(books).forEach(function(mint){
+    var book=books[mint];
+    var totalBoughtSOL=book.bought.reduce(function(a,b){return a+b.sol;},0);
+    var totalSoldSOL=book.sold.reduce(function(a,s){return a+s.sol;},0);
+    var totalBoughtQty=book.bought.reduce(function(a,b){return a+b.qty;},0);
+    var totalSoldQty=book.sold.reduce(function(a,s){return a+s.qty;},0);
+    var pctSold=totalBoughtQty>0?totalSoldQty/totalBoughtQty:1;
+    var stillHolding=pctSold<0.85&&totalBoughtSOL>0.001;
+    var realisedPnl=totalSoldSOL-totalBoughtSOL;
+    var unmatchedBuys=book.bought.length===0&&book.sold.length>0;
+    results.push({mint:mint,symbol:book.symbol,totalBoughtSOL:totalBoughtSOL,totalSoldSOL:totalSoldSOL,realisedPnlSOL:unmatchedBuys?0:realisedPnl,buys:book.bought.length,sells:book.sold.length,stillHolding:stillHolding,won:!unmatchedBuys&&realisedPnl>0,unmatchedBuys:unmatchedBuys});
+  });
+  results.sort(function(a,b){return Math.abs(b.realisedPnlSOL)-Math.abs(a.realisedPnlSOL);});
+  // Only count tokens with BOTH buys and sells in this wallet toward PnL/win rate
+  var traded=results.filter(function(r){return r.buys>0&&r.sells>0&&!r.unmatchedBuys;});
+  var winners=traded.filter(function(r){return r.won;});
+  var winRate=traded.length?Math.round((winners.length/traded.length)*100):null;
+  var totalRealised=traded.reduce(function(a,r){return a+(r.realisedPnlSOL||0);},0);
+  var failedCount=txs.filter(function(tx){return tx.transactionError;}).length;
+  return{tokens:results,winRate:winRate,totalRealisedSOL:totalRealised,traded:traded.length,topTokens:results,failedTxCount:failedCount};
+}
+
+// Returns all addresses that belong to this wallet in this tx:
+// the wallet itself + any ATA/intermediate accounts it controls.
+// Helius sometimes uses ATA addresses in tokenTransfers instead of the owner wallet address.
+// Known fee collectors, routers, and program accounts — never treat as wallet ATAs.
+// These appear in every Jupiter/DFlow tx and must not be confused with the user's addresses.
+var KNOWN_INFRA = {
+  'EmoRGN2szBGLUGEPRroNEg8nVgGd2U8FVGnDajUnVfr': true, // solanarent.sol WSOL fee ATA
+  'EmoRGNTnS9XBmyDRmtFECPsLasyV3nubCmivnsir1wVE': true, // solanarent.sol fee collector
+  '58iMPe4vMJmkXKxr9HNtFSXvfnHKRaHcKtcRvGRNJGH': true, // solanarent.sol fee ATA
+  'JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4': true, // Jupiter v6 program
+  'JUP4Fb2cqiRUcaTHdrPC8h2gNsA2ETXiPDD33WcGuJB': true,  // Jupiter v4 program
+  '9nnLbotNTcUhvbrsA6Mdkx45Sm82G35zo28AqUvjExn8': true, // Jupiter fee account
+  '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P': true,  // Pump.fun program
+  'Ce6TQqeHB9R8f5gu1YqgmNYJcHLt4HVyFmUXJAqKBhb': true,
+  'AgmLJBMDCqWynYnQiPCuj9ewsNNsBJXyzoUhD9LJzN51': true,
+  'DF1ow5t3MeKonLgNaXRfG9JMKZ1GKBCQNXdcBTBqPBp': true,
+  '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8': true,
+  'CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK': true,
+  'whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc': true,
+  'pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA': true,
+  '11111111111111111111111111111111': true,
+  'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA': true,
+  'ComputeBudget111111111111111111111111111111': true,
+  'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJe8bv': true,
+};
+// Known proxy/router wallet addresses that execute swaps on behalf of users.
+// These appear in tokenTransfers as buyer/seller but are NOT the user's wallet.
+// When one of these is the "buyer" in Jupiter ATA routing, the actual user is the buyer.
+var KNOWN_PROXY_ROUTERS = {
+  'DWrFQUhwsbZeC13zFjFr8y3sTDykT2qMvYusJQ6zUMtR': true, // solanarent.sol proxy router
+};
+
+function getWalletAddrs(tx, wallet) {
+  var addrs = {};
+  addrs[wallet] = true;
+  if (tx.feePayer && !KNOWN_INFRA[tx.feePayer]) addrs[tx.feePayer] = true;
+
+  // For DEX transactions, Helius may use the wallet's ATA address in tokenTransfers
+  // rather than the wallet address itself.  We expand the set ONE hop:
+  // if the wallet address appears as fromUserAccount on any transfer, the toUserAccount
+  // is likely that wallet's ATA for that token — add it.
+  // Crucially: do NOT expand from infrastructure addresses (fee collectors, AMM pools).
+  var tt = tx.tokenTransfers || [];
+  var nt = tx.nativeTransfers || [];
+
+  // First pass: wallet → dest (wallet sending tokens — dest is wallet's ATA or recipient)
+  tt.forEach(function(t) {
+    if (!t.fromUserAccount || !t.toUserAccount) return;
+    if (addrs[t.fromUserAccount] && !KNOWN_INFRA[t.toUserAccount]) {
+      addrs[t.toUserAccount] = true;
+    }
+  });
+
+  // Second pass: src → wallet (wallet receiving tokens — src might be wallet's sell ATA)
+  // Only expand from the original wallet/feePayer addresses, not first-pass additions,
+  // to avoid pulling in AMM pool addresses that received tokens from the wallet.
+  var _origAddrs = {};_origAddrs[wallet]=true;
+  if(tx.feePayer&&!KNOWN_INFRA[tx.feePayer])_origAddrs[tx.feePayer]=true;
+  tt.forEach(function(t) {
+    if (!t.fromUserAccount || !t.toUserAccount) return;
+    if (_origAddrs[t.toUserAccount] && !KNOWN_INFRA[t.fromUserAccount] && t.mint !== WSOL) {
+      addrs[t.fromUserAccount] = true;
+    }
+  });
+
+  return addrs;
+}
+
+// Module-level non-Jupiter ATA frequency table, populated at load time.
+// Used by netSOLforDisplay and buildSwapDesc to disambiguate Jupiter ATA-only routing.
+var _nonJupAtaFreq={};
+var _nonJupWsolTo={}; // times wallet sent WSOL to each address in non-Jupiter txs
+var _nonJupTokFreq={}; // times each address appeared in non-Jupiter non-WSOL token transfers
+
+function netSOLforDisplay(tx,wallet){
+  var nt=tx.nativeTransfers||[];var tt=tx.tokenTransfers||[];
+  var s=(tx.source||'').toUpperCase();
+  var isDex=s.indexOf('JUPITER')>=0||s.indexOf('DFLOW')>=0||s.indexOf('RAYDIUM')>=0||
+            s.indexOf('ORCA')>=0||s.indexOf('METEORA')>=0||s.indexOf('PHOENIX')>=0||s.indexOf('PUMP')>=0;
+
+  // Expand wallet identity to include all ATAs/accounts it controls in this tx
+  var wAddrs=getWalletAddrs(tx,wallet);
+  function isWallet(a){return !!wAddrs[a];}
+
+
+  // ── 0. OKX / vault-routed DEX: bypass misleading nativeTransfers ─────────────
+  var _desc0=(tx.description||'').toUpperCase();
+  var _ttAll=tx.tokenTransfers||[];var _ntAll=tx.nativeTransfers||[];
+  var isSparseDescOnly=_ttAll.length===0&&_ntAll.length===0&&
+                       _desc0.indexOf('SWAP')>=0&&_desc0.indexOf(' FOR ')>=0;
+  var isOkxRouted=s.indexOf('OKX')>=0||s.indexOf('ZEROFI')>=0||
+                  _desc0.indexOf('OKX')>=0||isSparseDescOnly||
+                  (tx.accountData||[]).some(function(ac){
+                    return ac.account==='AgmLJBMDCqWynYnQiPCuj9ewsNNsBJXyzoUhD9LJzN51';
+                  })||
+                  (tx.instructions||[]).some(function(ix){
+                    return (ix.programId||'')==='FTSZPaAsqBxWBakqbz7PqiRLthDMJcVXVtFHmQaFGGK9'||
+                           (ix.program||'').toUpperCase().indexOf('OKX')>=0;
+                  });
+  if(isOkxRouted){
+    // 0a. Swap event
+    var swapEv0=tx.events&&tx.events.swap;
+    if(swapEv0){
+      var tIn0=swapEv0.tokenInputs||[];var tOut0=swapEv0.tokenOutputs||[];
+      var ni0=swapEv0.nativeInput;var no0=swapEv0.nativeOutput;
+      if(ni0&&ni0.amount>=100000)return-(ni0.amount/1e9);
+      if(no0&&no0.amount>=100000)return no0.amount/1e9;
+      var maxWsolIn=tIn0.filter(function(t){return t.mint===WSOL;})
+        .reduce(function(a,t){var v=Number(t.rawTokenAmount&&t.rawTokenAmount.tokenAmount||0);if(v>1000)v=v/1e9;return v>a?v:a;},0);
+      var maxWsolOut=tOut0.filter(function(t){return t.mint===WSOL;})
+        .reduce(function(a,t){var v=Number(t.rawTokenAmount&&t.rawTokenAmount.tokenAmount||0);if(v>1000)v=v/1e9;return v>a?v:a;},0);
+      if(maxWsolIn>0.001)return-maxWsolIn;
+      if(maxWsolOut>0.001)return maxWsolOut;
+    }
+    // 0c. Token delta + WSOL tokenTransfers
+    {
+      var adMap0={};
+      (tx.accountData||[]).forEach(function(ac){
+        (ac.tokenBalanceChanges||[]).forEach(function(tb){
+          if(tb.userAccount&&ac.account)adMap0[ac.account]=tb.userAccount;
+        });
+      });
+      var wSet0={};wSet0[wallet]=true;
+      Object.keys(adMap0).forEach(function(ata){if(adMap0[ata]===wallet)wSet0[ata]=true;});
+      function isW0(a){return !!wSet0[a];}
+      var nonWsolTTs=tt.filter(function(t){return t.mint&&t.mint!==WSOL&&!STABLES[t.mint];})
+                       .sort(function(a,b){return Number(b.tokenAmount)-Number(a.tokenAmount);});
+      var dir0=0;
+      if(nonWsolTTs.length){
+        var topTok=nonWsolTTs[0];
+        var mintTTs=tt.filter(function(t){return t.mint===topTok.mint;});
+        var tokToWallet0=mintTTs.some(function(t){return isW0(t.toUserAccount);});
+        var tokFromWallet0=mintTTs.some(function(t){return isW0(t.fromUserAccount);});
+        var netTokDelta0=0;
+        (tx.accountData||[]).forEach(function(ac){
+          (ac.tokenBalanceChanges||[]).forEach(function(tb){
+            if(tb.mint!==topTok.mint)return;
+            if(!isW0(tb.userAccount)&&!isW0(adMap0[ac.account]))return;
+            var raw=Number((tb.rawTokenAmount&&tb.rawTokenAmount.tokenAmount)||0);
+            var dec=Number((tb.rawTokenAmount&&tb.rawTokenAmount.decimals)||0);
+            netTokDelta0+=dec>0?raw/Math.pow(10,dec):raw;
+          });
+        });
+        var wsolNetAmt0=tt.filter(function(t){return t.mint===WSOL;}).reduce(function(a,t){
+          var fromW=isW0(t.fromUserAccount),toW=isW0(t.toUserAccount);
+          if(fromW&&toW)return a;
+          if(toW)return a+(Number(t.tokenAmount)||0);
+          if(fromW)return a-(Number(t.tokenAmount)||0);
+          return a;
+        },0);
+        var wsolOutAmt0=tt.filter(function(t){return t.mint===WSOL&&isW0(t.fromUserAccount)&&!isW0(t.toUserAccount);}).reduce(function(a,t){return a+(Number(t.tokenAmount)||0);},0);
+        var wsolInAmt0=tt.filter(function(t){return t.mint===WSOL&&isW0(t.toUserAccount)&&!isW0(t.fromUserAccount);}).reduce(function(a,t){return a+(Number(t.tokenAmount)||0);},0);
+        if(Math.abs(wsolNetAmt0)>0.001){dir0=wsolNetAmt0<0?-1:1;}
+        else if(wsolOutAmt0>0&&wsolInAmt0===0){dir0=-1;}
+        else if(wsolInAmt0>0&&wsolOutAmt0===0){dir0=1;}
+        else if(tokToWallet0&&!tokFromWallet0){dir0=-1;}
+        else if(tokFromWallet0&&!tokToWallet0){dir0=1;}
+        else if(netTokDelta0<0){dir0=1;}
+        else if(netTokDelta0>0){dir0=-1;}
+        var wsolFromW0=tt.filter(function(t){return t.mint===WSOL&&isW0(t.fromUserAccount)&&!isW0(t.toUserAccount);}).map(function(t){return Number(t.tokenAmount)||0;});
+        var wsolToW0=tt.filter(function(t){return t.mint===WSOL&&isW0(t.toUserAccount)&&!isW0(t.fromUserAccount);}).map(function(t){return Number(t.tokenAmount)||0;});
+        var maxWsolFrom0=wsolFromW0.length?wsolFromW0.reduce(function(a,b){return b>a?b:a;},0):0;
+        var maxWsolTo0=wsolToW0.length?wsolToW0.reduce(function(a,b){return b>a?b:a;},0):0;
+        var solAmt0c=dir0===-1?maxWsolFrom0:dir0===1?maxWsolTo0:Math.max(maxWsolFrom0,maxWsolTo0);
+        if(solAmt0c<0.001)solAmt0c=Math.abs(wsolNetAmt0);
+        if(dir0!==0&&solAmt0c>0.001)return dir0===-1?-solAmt0c:solAmt0c;
+        // Token-to-token via OKX: direction known but no WSOL reached wallet.
+        // Return 0 so buildSwapDesc renders "Swapped X → Y" instead of corrupted SOL value.
+        if(dir0!==0&&solAmt0c<0.001)return 0;
+      }
+    }
+    // 0c-fallback
+    var allWsol0=tt.filter(function(t){return t.mint===WSOL;});
+    if(allWsol0.length){
+      var bigWsol0=allWsol0.reduce(function(a,t){var v=Number(t.tokenAmount)||0;return v>a?v:a;},0);
+      if(bigWsol0>0.001){
+        var tokToWalletFB=tt.some(function(t){return t.mint!==WSOL&&!STABLES[t.mint]&&isWallet(t.toUserAccount);});
+        var tokFromWalletFB=tt.some(function(t){return t.mint!==WSOL&&!STABLES[t.mint]&&isWallet(t.fromUserAccount);});
+        if(tokToWalletFB&&!tokFromWalletFB)return-bigWsol0;
+        if(tokFromWalletFB&&!tokToWalletFB)return bigWsol0;
+      }
+    }
+    // 0d. Description parse
+    var descOkx=tx.description||'';
+    if(descOkx){
+      var mOkx=descOkx.match(/swapped?\s+([\d,.]+)\s+(\S+)\s+for\s+([\d,.]+)\s+(\S+)/i);
+      if(mOkx){
+        var inAmtO=parseFloat(mOkx[1].replace(/,/g,''));
+        var inTokO=(mOkx[2]||'').replace(/[^a-zA-Z0-9]/g,'').toUpperCase();
+        var outAmtO=parseFloat(mOkx[3].replace(/,/g,''));
+        var outTokO=(mOkx[4]||'').replace(/[^a-zA-Z0-9]/g,'').toUpperCase();
+        var inIsSOLO=inTokO==='WSOL'||inTokO==='SOL';
+        var outIsSOLO=outTokO==='WSOL'||outTokO==='SOL';
+        if(inIsSOLO&&!outIsSOLO&&inAmtO>0.0001)return-inAmtO;
+        if(!inIsSOLO&&outIsSOLO&&outAmtO>0.0001)return outAmtO;
+      }
+    }
+  }
+
+  // ── 0b. P2P / OTC swap: TRANSFER-type txs where WSOL flows directly to/from the wallet ──
+  // Helius labels these as TRANSFER/SYSTEM_PROGRAM even though they are token→SOL swaps.
+  // e.g. wallet sends Immortals/USD1 and directly receives WSOL from a counterparty.
+  // getWalletAddrs sometimes includes intermediate accounts that cause WSOL net to cancel out;
+  // we bypass that by only looking at direct wallet address (not expanded ATAs) for WSOL flows.
+  if((tx.type||'').toUpperCase()==='TRANSFER'){
+    var _tt0b=tx.tokenTransfers||[];
+    // WSOL directly received by or sent from the wallet address itself (not ATAs)
+    var _wsolDirectIn0b=_tt0b.filter(function(t){return t.mint===WSOL&&t.toUserAccount===wallet&&t.fromUserAccount!==wallet;});
+    var _wsolDirectOut0b=_tt0b.filter(function(t){return t.mint===WSOL&&t.fromUserAccount===wallet&&t.toUserAccount!==wallet;});
+    var _hasNonWsolSent0b=_tt0b.some(function(t){return t.mint&&t.mint!==WSOL&&t.fromUserAccount===wallet;});
+    var _hasNonWsolRec0b=_tt0b.some(function(t){return t.mint&&t.mint!==WSOL&&t.toUserAccount===wallet;});
+    if(_wsolDirectIn0b.length&&(_hasNonWsolSent0b||_hasNonWsolRec0b)){
+      // Wallet sold tokens for WSOL (OTC sell)
+      var _solIn0b=_wsolDirectIn0b.reduce(function(a,t){return a+Number(t.tokenAmount||0);},0);
+      if(_solIn0b>0.001)return _solIn0b;
+    }
+    if(_wsolDirectOut0b.length&&(_hasNonWsolSent0b||_hasNonWsolRec0b)){
+      // Wallet bought tokens with WSOL (OTC buy)
+      var _solOut0b=_wsolDirectOut0b.reduce(function(a,t){return a+Number(t.tokenAmount||0);},0);
+      if(_solOut0b>0.001)return -_solOut0b;
+    }
+    // Also try: any WSOL flowing to wallet even through one intermediate (expanded wAddrs),
+    // but only if NOT a self-transfer (fromUserAccount not in wallet's own canonical address)
+    if(!_wsolDirectIn0b.length&&!_wsolDirectOut0b.length){
+      var _wsolToWallet0b=_tt0b.filter(function(t){return t.mint===WSOL&&isWallet(t.toUserAccount)&&t.fromUserAccount!==wallet;});
+      var _wsolFromWallet0b=_tt0b.filter(function(t){return t.mint===WSOL&&isWallet(t.fromUserAccount)&&t.toUserAccount!==wallet;});
+      var _hasNonWsol0b=_tt0b.some(function(t){return t.mint&&t.mint!==WSOL&&(t.fromUserAccount===wallet||t.toUserAccount===wallet);});
+      if(_wsolToWallet0b.length&&_hasNonWsol0b){
+        var _maxWsolIn0b=_wsolToWallet0b.reduce(function(a,t){var v=Number(t.tokenAmount||0);return v>a?v:a;},0);
+        if(_maxWsolIn0b>0.001)return _maxWsolIn0b;
+      }
+      if(_wsolFromWallet0b.length&&_hasNonWsol0b){
+        var _maxWsolOut0b=_wsolFromWallet0b.reduce(function(a,t){var v=Number(t.tokenAmount||0);return v>a?v:a;},0);
+        if(_maxWsolOut0b>0.001)return -_maxWsolOut0b;
+      }
+    }
+  }
+
+  // ── 1. Helius enhanced swap event (most reliable, when present) ─────────────
+  var swapEvent=tx.events&&tx.events.swap;
+  if(swapEvent){
+    var ni=swapEvent.nativeInput;var no_=swapEvent.nativeOutput;
+    if(ni&&isWallet(ni.account)&&ni.amount>=100000){
+      // If both nativeInput AND nativeOutput exist for the same wallet account,
+      // and tokenInputs contains a stablecoin, then the native SOL amounts are
+      // WSOL routing artifacts (USDT→USDC→WSOL→token multi-hop). The real trade
+      // cost is the stablecoin, not SOL. Return 0 so buildSwapDesc uses stablecoin path.
+      var _tIns0=swapEvent.tokenInputs||[];
+      var _hasStableIn0=_tIns0.some(function(t){return !!STABLES[t.mint];});
+      if(no_&&isWallet(no_.account)&&_hasStableIn0){return 0;}
+      // Check if nativeTransfers net is much larger — means the wallet funded
+      // the trade via a larger native SOL transfer that Jupiter routed through WSOL.
+      // In that case nativeInput only captures a small portion; use the true net instead.
+      var _niAmt=ni.amount/1e9;
+      var _natNet=0;
+      nt.forEach(function(n){
+        if(n.fromUserAccount===wallet)_natNet-=n.amount/1e9;
+        else if(n.toUserAccount===wallet)_natNet+=n.amount/1e9;
+      });
+      if(Math.abs(_natNet)>_niAmt*2&&Math.abs(_natNet)>0.001)return _natNet;
+      return -_niAmt;
+    }
+    if(no_&&isWallet(no_.account)&&no_.amount>=100000)return(no_.amount/1e9);
+    var tInputs=swapEvent.tokenInputs||[];var tOutputs=swapEvent.tokenOutputs||[];
+    var wsolIn=tInputs.find(function(t){return t.mint===WSOL&&isWallet(t.userAccount);});
+    var wsolOut=tOutputs.find(function(t){return t.mint===WSOL&&isWallet(t.userAccount);});
+    if(wsolIn)return-(Number(wsolIn.rawTokenAmount&&wsolIn.rawTokenAmount.tokenAmount)||Number(wsolIn.tokenAmount)||0);
+    if(wsolOut)return(Number(wsolOut.rawTokenAmount&&wsolOut.rawTokenAmount.tokenAmount)||Number(wsolOut.tokenAmount)||0);
+    var bigWsolIn=tInputs.filter(function(t){return t.mint===WSOL;}).reduce(function(a,t){var v=Number(t.rawTokenAmount&&t.rawTokenAmount.tokenAmount)||Number(t.tokenAmount)||0;return v>a?v:a;},0);
+    if(bigWsolIn>0.001)return-bigWsolIn;
+    var bigWsolOut=tOutputs.filter(function(t){return t.mint===WSOL;}).reduce(function(a,t){var v=Number(t.rawTokenAmount&&t.rawTokenAmount.tokenAmount)||Number(t.tokenAmount)||0;return v>a?v:a;},0);
+    if(bigWsolOut>0.001)return bigWsolOut;
+    return 0;
+  }
+
+  // ── 1b. Jupiter/DEX via ATA-only routing: wallet is feePayer but NOT in any tokenTransfer ──
+  // Jupiter routes through wallet-owned ATAs. The wallet (feePayer) never appears directly in
+  // tokenTransfers. We identify direction by finding which account is the BUYER (wsol<0, tok>0)
+  // vs SELLER (wsol>0, tok<0) using accountData + tokenTransfers WSOL flows.
+  // Key insight: the buyer always pays WSOL and receives token; the seller receives WSOL and
+  // sends token. One side is the wallet's ATA; the other is the AMM pool's ATA.
+  // We disambiguate using: (a) accountData WSOL negative entry (payer explicitly listed),
+  // (b) nativeTransfer connectivity to wallet, (c) number of seller accounts.
+  if(isDex&&tx.feePayer===wallet){
+    var _walletInTT=tt.some(function(t){
+      return t.fromUserAccount===wallet||t.toUserAccount===wallet;
+    });
+    if(!_walletInTT){
+      // Build per-account token balance changes from accountData
+      var _jupTokPer={};var _jupTokMint={};
+      (tx.accountData||[]).forEach(function(ac){
+        (ac.tokenBalanceChanges||[]).forEach(function(tb){
+          var mint=tb.mint;
+          if(!mint||mint===WSOL||STABLES[mint])return;
+          var ua=tb.userAccount;if(!ua)return;
+          var raw=Number((tb.rawTokenAmount&&tb.rawTokenAmount.tokenAmount)||0);
+          var dec=Number((tb.rawTokenAmount&&tb.rawTokenAmount.decimals)||0);
+          var amt=dec>0?raw/Math.pow(10,dec):raw;
+          _jupTokPer[ua]=(_jupTokPer[ua]||0)+amt;
+          if(Math.abs(amt)>Math.abs((_jupTokPer[ua]||0)-amt)){_jupTokMint[ua]=mint;}
+        });
+      });
+      // Build per-account WSOL net: accountData (signed, authoritative when present) merged with
+      // tokenTransfers (always complete, used when accountData omits the payer)
+      var _jupWsolAcc={};
+      (tx.accountData||[]).forEach(function(ac){
+        (ac.tokenBalanceChanges||[]).forEach(function(tb){
+          if(!tb.mint||tb.mint!==WSOL)return;
+          var ua=tb.userAccount;if(!ua)return;
+          var raw=Number((tb.rawTokenAmount&&tb.rawTokenAmount.tokenAmount)||0);
+          var dec=Number((tb.rawTokenAmount&&tb.rawTokenAmount.decimals)||0);
+          _jupWsolAcc[ua]=(_jupWsolAcc[ua]||0)+(dec>0?raw/Math.pow(10,dec):raw);
+        });
+      });
+      var _jupWsolTT={};
+      tt.forEach(function(t){
+        if(t.mint!==WSOL)return;
+        var amt=Number(t.tokenAmount)||0;
+        if(t.fromUserAccount)_jupWsolTT[t.fromUserAccount]=(_jupWsolTT[t.fromUserAccount]||0)-amt;
+        if(t.toUserAccount)_jupWsolTT[t.toUserAccount]=(_jupWsolTT[t.toUserAccount]||0)+amt;
+      });
+      // Merge: accountData wins when present (it's signed correctly)
+      var _jupWsol={};
+      Object.keys(_jupWsolTT).forEach(function(ua){_jupWsol[ua]=_jupWsolTT[ua];});
+      Object.keys(_jupWsolAcc).forEach(function(ua){_jupWsol[ua]=_jupWsolAcc[ua];});
+      // Classify: buyers (tok>0, wsol<0) and sellers (tok<0, wsol>0)
+      var _jupBuyers=[];var _jupSellers=[];
+      Object.keys(_jupTokPer).forEach(function(ua){
+        var w=_jupWsol[ua]||0;var tok=_jupTokPer[ua];
+        if(w<-0.001&&tok>0)_jupBuyers.push({ua:ua,w:w,tok:tok,mint:_jupTokMint[ua]});
+        else if(w>0.001&&tok<0)_jupSellers.push({ua:ua,w:w,tok:tok,mint:_jupTokMint[ua]});
+      });
+      if(!_jupBuyers.length&&!_jupSellers.length){
+        // Case A: tok_per is empty — only stables (USDC/USDT) and WSOL moved.
+        // Pattern: wallet spent stables and received SOL. Find total WSOL paid (negative entry).
+        if(!Object.keys(_jupTokPer).length){
+          var _stableWsolPaid=0;
+          Object.keys(_jupWsol).forEach(function(ua){
+            if(_jupWsol[ua]<-0.001)_stableWsolPaid+=Math.abs(_jupWsol[ua]);
+          });
+          // Subtract tiny fee-account receipts (EmoRGNTn etc always get ~0.008 SOL)
+          var _stableWsolFee=0;
+          Object.keys(_jupWsol).forEach(function(ua){
+            if(_jupWsol[ua]>0.001&&_jupWsol[ua]<0.02)_stableWsolFee+=_jupWsol[ua];
+          });
+          var _stableNet=_stableWsolPaid-_stableWsolFee;
+          if(_stableNet>0.001)return _stableNet;
+        }
+        // Case B: tokens present but no WSOL signal — SOL paid via nativeTransfers only.
+        var _natPer={};
+        (tx.accountData||[]).forEach(function(ac){_natPer[ac.account]=ac.nativeBalanceChange/1e9;});
+        var _natSellAmt=0;
+        Object.keys(_jupTokPer).forEach(function(ua){
+          var tok=_jupTokPer[ua];
+          var nat=_natPer[ua]||0;
+          if(tok<0&&nat>0.001){_natSellAmt=nat;}  // sent token, received SOL = SELL
+        });
+        return _natSellAmt>0.001?_natSellAmt:0;
+      }
+      // Determine direction:
+      // Multiple sellers = multiple wallet ATAs split across accounts -> SELL
+      if(_jupSellers.length>1){
+        var _totalSellerWsol=_jupSellers.reduce(function(a,s){return a+s.w;},0);
+        return _totalSellerWsol>0.001?_totalSellerWsol:0;
+      }
+      if(!_jupBuyers.length){
+        // Only sellers: SELL
+        var _s=_jupSellers[0];return _s.w>0.001?_s.w:0;
+      }
+      if(!_jupSellers.length){
+        // Only buyers: BUY
+        var _b=_jupBuyers[0];return _b.w<-0.001?_b.w:0;
+      }
+      // Single buyer + single seller: disambiguate using signals.
+      // Signal 0 (proxy router): buyer is a known proxy-router wallet that executes trades on
+      //   behalf of the feePayer — the feePayer IS the actual buyer -> BUY.
+      // Signal 1 (wsolTo buyer): wallet sent WSOL directly to buyer many times -> buyer is DFlow routing contract -> SELL.
+      // Signal 2 (wsolTo seller): wallet sent WSOL directly to seller -> seller is wallet's own WSOL ATA -> SELL.
+      //   This catches: wallet's WSOL ATA appears as "seller" in Jupiter sell txs (it receives sell proceeds).
+      //   The AMM pool (buyer) shows up in non-Jup tokenTransfers but wsolTo=0 (wallet sends tokens, not WSOL, to pool).
+      // Signal 3 (freq buyer): buyer never appeared outside Jupiter (freq==0) -> pool -> SELL.
+      // Otherwise: buyer is wallet's persistent WSOL ATA -> BUY.
+      var _jb=_jupBuyers[0];var _js=_jupSellers[0];
+      // Signal 0: buyer is a known proxy router (e.g. solanarent.sol) that acts on behalf of feePayer
+      if(KNOWN_PROXY_ROUTERS[_jb.ua]){
+        // The feePayer (wallet) is the real buyer; use buyer's WSOL amount as trade cost
+        return _jb.w;
+      }
+      var _buyerWsolTo=(_nonJupWsolTo[_jb.ua]||0);
+      var _buyerNonJupFreq=(_nonJupAtaFreq[_jb.ua]||0);
+      var _sellerWsolTo=(_nonJupWsolTo[_js.ua]||0);
+      // Routing contract: high wsolTo AND never handles non-WSOL tokens (routing contracts only move SOL)
+      if(_buyerWsolTo>_ROUTING_WSOL_THRESHOLD&&_buyerWsolTo>_sellerWsolTo&&!(_nonJupTokFreq[_jb.ua]||0)){return _js.w;}
+      // Wallet's WSOL ATA as seller: wallet sent WSOL to seller (funded its own ATA) -> SELL
+      if(_sellerWsolTo>0&&_sellerWsolTo>=_buyerWsolTo){return _js.w;}
+      // Jupiter-only pool: buyer never appeared outside Jupiter -> SELL
+      if(_buyerNonJupFreq===0){return _js.w;}
+      // Buyer is wallet's persistent WSOL ATA -> BUY
+      return _jb.w;
+    }
+  }
+
+  // ── 2. For DEX sources: determine trade value using expanded wallet addresses ─
+  if(isDex){
+    // Non-WSOL, non-stable tokens sent/received by any wallet-controlled address
+    var recNW=tt.filter(function(t){return isWallet(t.toUserAccount)&&t.mint!==WSOL&&!STABLES[t.mint];});
+    var sentNW=tt.filter(function(t){return isWallet(t.fromUserAccount)&&t.mint!==WSOL&&!STABLES[t.mint];});
+    var isBuyLike=recNW.length>0&&sentNW.length===0;
+    var isSellLike=sentNW.length>0&&recNW.length===0;
+    if(recNW.length>0&&sentNW.length>0){
+      var _adNetTok=0;
+      var _topMint=(recNW[0]||sentNW[0]).mint;
+      (tx.accountData||[]).forEach(function(ac){
+        (ac.tokenBalanceChanges||[]).forEach(function(tb){
+          if(tb.mint!==_topMint||tb.userAccount!==wallet)return;
+          var raw=Number((tb.rawTokenAmount&&tb.rawTokenAmount.tokenAmount)||0);
+          var dec=Number((tb.rawTokenAmount&&tb.rawTokenAmount.decimals)||0);
+          _adNetTok+=dec>0?raw/Math.pow(10,dec):raw;
+        });
+      });
+      if(_adNetTok>0){isBuyLike=true;isSellLike=false;}
+      else if(_adNetTok<0){isSellLike=true;isBuyLike=false;}
+      else{
+        // _adNetTok===0: same token flows in AND out (passes through wallet, DFlow/Pump AMM routing).
+        // Neither buy nor sell can be determined from token direction alone.
+        // Mark with a special flag so the native SOL fallback fires unconditionally below.
+        isBuyLike=false;isSellLike=false;
+      }
+    }
+    // Detect pass-through pattern: same non-WSOL token arrives at wallet AND leaves wallet
+    // (token transits the wallet as part of DFlow/Pump AMM routing — net token change = 0).
+    // We need to force the native SOL fallback to fire regardless of isBuyLike/isSellLike.
+    var _passThroughToken=(recNW.length>0&&sentNW.length>0&&recNW[0].mint===sentNW[0].mint);
+
+    // 2a. WSOL directly to/from wallet — use only confirmed wallet-owned addresses
+    // (_tightWallet = wallet + ATAs confirmed via accountData balance changes)
+    // This avoids AMM pool addresses that getWalletAddrs may have pulled in.
+    var _tightWallet={};_tightWallet[wallet]=true;
+    (tx.accountData||[]).forEach(function(ac){
+      (ac.tokenBalanceChanges||[]).forEach(function(tb){
+        if(tb.userAccount===wallet&&ac.account)_tightWallet[ac.account]=true;
+      });
+    });
+    function isTightWallet(a){return !!_tightWallet[a];}
+    var wsolDirect=tt.filter(function(t){
+      return t.mint===WSOL&&(isTightWallet(t.toUserAccount)||isTightWallet(t.fromUserAccount))&&
+             !(isTightWallet(t.toUserAccount)&&isTightWallet(t.fromUserAccount));
+    }).reduce(function(a,t){
+      if(isTightWallet(t.toUserAccount))return a+Number(t.tokenAmount);
+      if(isTightWallet(t.fromUserAccount))return a-Number(t.tokenAmount);
+      return a;
+    },0);
+    // If wsolDirect is still zero (or only a small fee), fall back to nativeTransfers net.
+    // Also trigger when token passes through wallet (_passThroughToken) because in that case
+    // wsolDirect may only capture a tiny fee WSOL (e.g. 0.008 SOL to fee collector) which
+    // would give the wrong direction — the real trade amount is in native SOL transfers.
+    if(Math.abs(wsolDirect)<0.001&&(isBuyLike||isSellLike)||(Math.abs(wsolDirect)<0.001&&_passThroughToken)){
+      // Guard: if the wallet is directly sending a non-WSOL, non-stable token AND
+      // receiving a DIFFERENT non-WSOL token, this is a token→token swap routed via
+      // DFlow/Pump AMM. The native transfers are just routing overhead, NOT the trade
+      // price. Return 0 so buildSwapDesc falls through to the token→token path.
+      var _tok2tokGuard=(function(){
+        var _directSent=tt.filter(function(t){
+          return t.fromUserAccount===wallet&&t.mint!==WSOL&&!STABLES[t.mint];
+        });
+        var _anyRec=tt.some(function(t){
+          return isWallet(t.toUserAccount)&&t.mint!==WSOL&&!STABLES[t.mint]&&
+                 !_directSent.some(function(s){return s.mint===t.mint;});
+        });
+        return _directSent.length>0&&_anyRec;
+      })();
+      if(_tok2tokGuard)return 0;
+      var _natNetFb=0;
+      nt.forEach(function(n){
+        if(n.toUserAccount===wallet)_natNetFb+=n.amount/1e9;
+        else if(n.fromUserAccount===wallet)_natNetFb-=n.amount/1e9;
+      });
+      if(Math.abs(_natNetFb)>0.001)wsolDirect=_natNetFb;
+      // For pass-through txs: if we now have a clear direction from nat fallback,
+      // set isBuyLike/isSellLike so that subsequent logic and return value are correct.
+      if(_passThroughToken&&Math.abs(_natNetFb)>0.001){
+        if(_natNetFb<0){isBuyLike=true;isSellLike=false;}
+        else{isSellLike=true;isBuyLike=false;}
+      }
+    }
+    // For pass-through token txs, resolve direction from wsolDirect and native SOL.
+    // wsolDirect may be: (a) large positive WSOL proceeds (SELL), (b) large negative WSOL cost (BUY),
+    // or (c) a tiny fee amount (e.g. -0.009 SOL) — in which case native SOL has the real direction.
+    // Only use native SOL to override wsolDirect when wsolDirect is in the fee range (<0.01 SOL)
+    // AND native SOL net is itself meaningful (>0.01 SOL). This avoids routing refunds (~0.002 SOL)
+    // incorrectly overriding a correct large wsolDirect.
+    if(_passThroughToken){
+      // Resolve direction for pass-through tokens (same token flows in AND out of wallet).
+      // Both native SOL net and WSOL direct can indicate direction; the dominant one wins.
+      // Rule: native SOL overrides wsolDirect only when:
+      //   (a) wsolDirect is in the fee range (< 0.01 SOL absolute), OR
+      //   (b) abs(native) > abs(wsolDirect) * 0.5  — nat is at least half the wsol amount,
+      //       meaning the native movement is the real trade (not a small routing refund).
+      // This prevents a tiny routing refund (~0.01 SOL) from overriding a large WSOL buy cost.
+      var _natNetPT=0;
+      nt.forEach(function(n){
+        if(n.toUserAccount===wallet)_natNetPT+=n.amount/1e9;
+        else if(n.fromUserAccount===wallet)_natNetPT-=n.amount/1e9;
+      });
+      var _natOverridesWsol=Math.abs(_natNetPT)>0.001&&
+        (Math.abs(wsolDirect)<0.01||Math.abs(_natNetPT)>Math.abs(wsolDirect)*0.5);
+      if(_natOverridesWsol){
+        // Native SOL movement is authoritative — use it for direction and amount.
+        wsolDirect=_natNetPT;
+        if(_natNetPT<0){isBuyLike=true;isSellLike=false;}
+        else{isSellLike=true;isBuyLike=false;}
+      } else if(wsolDirect>0.001){
+        // WSOL flowing TO wallet = SELL proceeds (e.g. PUMP_AMM WSOL-settle sell).
+        isSellLike=true;isBuyLike=false;
+      } else if(wsolDirect<-0.01){
+        // Wallet paid large WSOL = BUY (small native refund is just routing noise).
+        isBuyLike=true;isSellLike=false;
+      }
+      // else: amounts too small or ambiguous — direction left to later fallback logic.
+    }
+    if(isBuyLike||isSellLike){
+      var _d2a=tx.description||'';
+      var _m2a=_d2a.match(/swapped?\s+([\d,.]+)\s+(\S+)\s+for\s+([\d,.]+)\s+(\S+)/i);
+      if(_m2a){
+        var _inA2a=parseFloat(_m2a[1].replace(/,/g,''));
+        var _inT2a=(_m2a[2]||'').replace(/[^a-zA-Z0-9]/g,'').toUpperCase();
+        var _outA2a=parseFloat(_m2a[3].replace(/,/g,''));
+        var _outT2a=(_m2a[4]||'').replace(/[^a-zA-Z0-9]/g,'').toUpperCase();
+        var _inSOL2a=_inT2a==='WSOL'||_inT2a==='SOL';
+        var _outSOL2a=_outT2a==='WSOL'||_outT2a==='SOL';
+        if(_inSOL2a&&_inA2a>0.0001&&isBuyLike)return-_inA2a;
+        if(_outSOL2a&&_outA2a>0.0001&&isSellLike)return _outA2a;
+      }
+    }
+    if(Math.abs(wsolDirect)>0.001)return isBuyLike?-Math.abs(wsolDirect):isSellLike?Math.abs(wsolDirect):wsolDirect;
+
+    // 2b. Stablecoin output — return 0, let buildSwapDesc show "Sold X for Y USDC"
+    var stableAnyInTx=tt.some(function(t){return !!STABLES[t.mint];});
+    if(stableAnyInTx&&isSellLike)return 0;
+    // Stablecoin input (buy with USDC) — also return 0
+    var stableFromWallet=tt.some(function(t){return !!STABLES[t.mint]&&isWallet(t.fromUserAccount);});
+    if(stableFromWallet&&isBuyLike)return 0;
+
+    // Helper: get real trade WSOL amount — largest that is >=5% of the max (filters fee dust)
+    function getRealWsol(transfers) {
+      var amts=transfers.map(function(t){return Number(t.tokenAmount)||0;}).filter(function(v){return v>0.0001;});
+      if(!amts.length)return 0;
+      var mx=amts.reduce(function(a,b){return b>a?b:a;},0);
+      var real=amts.filter(function(v){return v>=mx*0.05;});
+      return real.reduce(function(a,b){return b>a?b:a;},0);
+    }
+
+    var allWsol=tt.filter(function(t){return t.mint===WSOL&&!(isTightWallet(t.toUserAccount)&&isTightWallet(t.fromUserAccount));});
+    var allNat=nt.filter(function(n){return n.amount>=100000;});
+
+    // 2c. WSOL in tx with known direction (isBuyLike/isSellLike from token transfers)
+    if(allWsol.length&&(isBuyLike||isSellLike)){
+      var tradeWsol=getRealWsol(allWsol);
+      if(tradeWsol>0.001){
+        if(isBuyLike)return-tradeWsol;
+        if(isSellLike)return tradeWsol;
+      }
+    }
+
+    // 2d. No WSOL but known direction — native SOL
+    if(allNat.length&&(isBuyLike||isSellLike)){
+      var bigN=allNat.reduce(function(a,n){return n.amount>a?n.amount:a;},0)/1e9;
+      if(bigN>0.001){if(isBuyLike)return-bigN;if(isSellLike)return bigN;}
+    }
+
+    // 2e. Direction known but no amount found, OR direction unknown — resolve amount
+    // Falls through here when isBuyLike/isSellLike were set but WSOL/SOL amount was 0
+    var _hadAmount=(typeof tradeWsol!=='undefined'&&tradeWsol>0.001)||(typeof bigN!=='undefined'&&bigN>0.001);
+    if(!isBuyLike&&!isSellLike||!_hadAmount){
+
+      // ── Priority 1: Parse tx.description (Helius always populates this correctly) ──
+      // Format: "<wallet> swapped <inAmt> <inToken> for <outAmt> <outToken> on <DEX>"
+      var desc=tx.description||'';
+      if(desc){
+        var fullMatch=desc.match(/swapped? ([\d,.]+) (\S+) for ([\d,.]+) (\S+)/i);
+        if(fullMatch){
+          var inAmt=parseFloat(fullMatch[1].replace(/,/g,''));
+          var inTok=fullMatch[2].replace(/[^a-zA-Z0-9]/g,'').toUpperCase();
+          var outAmt=parseFloat(fullMatch[3].replace(/,/g,''));
+          var outTok=fullMatch[4].replace(/[^a-zA-Z0-9]/g,'').toUpperCase();
+          var inIsSOL=inTok==='WSOL'||inTok==='SOL';
+          var outIsSOL=outTok==='WSOL'||outTok==='SOL';
+          var inIsStable=inTok==='USDC'||inTok==='USDT';
+          var outIsStable=outTok==='USDC'||outTok==='USDT';
+          // BUY: input is SOL/WSOL or stablecoin, output is a regular token
+          if((inIsSOL||inIsStable)&&!outIsSOL&&!outIsStable){
+            if(inIsSOL&&inAmt>0.0001)return-inAmt;
+            return 0; // stable input — buildSwapDesc will show USDC label
+          }
+          // SELL: input is a regular token, output is SOL/WSOL or stablecoin
+          if(!inIsSOL&&!inIsStable){
+            if(outIsSOL&&outAmt>0.0001)return outAmt;
+            if(outIsStable)return 0; // stable output — buildSwapDesc shows USDC label
+          }
+          // STABLE→SOL/WSOL (e.g. USDC→WSOL): buying SOL with stablecoin
+          if(inIsStable&&outIsSOL&&outAmt>0.0001)return-outAmt;
+          // SOL→STABLE (e.g. WSOL→USDC): selling SOL for stablecoin — return 0
+          if(inIsSOL&&outIsStable)return 0;
+        }
+      }
+
+      // ── Priority 2: native SOL leaving/arriving at wallet ──────────────────────
+      // Use 0.005 SOL threshold to ignore tiny fee refunds (which are ~0.002 SOL)
+      var natFromWallet=nt.filter(function(n){return isWallet(n.fromUserAccount)&&n.amount>=5000000;});
+      var natToWallet=nt.filter(function(n){return isWallet(n.toUserAccount)&&n.amount>=5000000;});
+      var tradeWsol2=getRealWsol(allWsol);
+      // If both directions have SOL, use the LARGER one to determine direction
+      var solInP2=natToWallet.reduce(function(a,n){return a+(n.amount/1e9);},0);
+      var solOutP2=natFromWallet.reduce(function(a,n){return a+(n.amount/1e9);},0);
+      var netNatP2=solInP2-solOutP2;
+      if((natFromWallet.length||natToWallet.length)&&tradeWsol2>0.001){
+        if(netNatP2<-0.001)return-tradeWsol2; // net SOL out = buy
+        if(netNatP2>0.001)return tradeWsol2;  // net SOL in = sell
+      }
+      var bigNatW=allNat.reduce(function(a,n){return n.amount>a?n.amount:a;},0)/1e9;
+      if(netNatP2<-0.001&&bigNatW>0.001)return-bigNatW;
+      if(netNatP2>0.001&&bigNatW>0.001)return bigNatW;
+
+      // ── Priority 3: WSOL from/to the ACTUAL wallet address only (not feePayer/ATA) ─
+      // Use wallet directly — feePayer may be solanarent router which also sends WSOL fees
+      var wsolFromActual=tt.filter(function(t){return t.mint===WSOL&&t.fromUserAccount===wallet;});
+      var wsolToActual=tt.filter(function(t){return t.mint===WSOL&&t.toUserAccount===wallet;});
+      if(wsolFromActual.length&&tradeWsol2>0.001){
+        var wsolSentAmt=wsolFromActual.reduce(function(a,t){return a+Number(t.tokenAmount);},0);
+        return wsolSentAmt<tradeWsol2*0.5?tradeWsol2:-tradeWsol2;
+      }
+      if(wsolToActual.length&&tradeWsol2>0.001)return tradeWsol2;
+
+      // ── Priority 4: feePayer + native SOL transfers + all token transfers ─────────
+      // Helius returns empty description for many Jupiter txs. Use raw transfer data.
+      // From debug: NAT shows large SOL arriving at wallet (sell) or leaving (buy).
+      // WSOL shows swap amounts. feePayer IS the trading wallet.
+      var fp=tx.feePayer;
+      if(fp&&isWallet(fp)){
+        var allWsolTx=tt.filter(function(t){return t.mint===WSOL;});
+        var nonWsolToks=tt.filter(function(t){return t.mint&&t.mint!==WSOL&&!STABLES[t.mint];});
+        var stableToks=tt.filter(function(t){return !!STABLES[t.mint];});
+
+        // 4a. Look at native SOL transfers involving ANY wallet-controlled address
+        var natToWallet=nt.filter(function(n){return isWallet(n.toUserAccount)&&n.amount>=5000000;});
+        var natFromWallet=nt.filter(function(n){return isWallet(n.fromUserAccount)&&n.amount>=5000000;});
+        var solIn=natToWallet.reduce(function(a,n){return a+(n.amount/1e9);},0);
+        var solOut=natFromWallet.reduce(function(a,n){return a+(n.amount/1e9);},0);
+
+
+        // Large SOL arriving at any wallet address = received proceeds = SELL (or bought SOL)
+        if(solIn>0.001&&nonWsolToks.length){return solIn;}
+        // Large SOL leaving = paid for buy
+        if(solOut>0.001&&nonWsolToks.length){return-solOut;}
+
+        // 4b. Pure SOL/WSOL swap (TOKS= empty, e.g. USDC→WSOL or WSOL→USDC)
+        if(solIn>0.001&&!nonWsolToks.length){return-solIn;} // received SOL = bought SOL
+        if(solOut>0.001&&!nonWsolToks.length){return solOut;} // sent SOL = sold SOL
+
+        // 4c. WSOL-based: use getRealWsol + feePayer WSOL direction
+        var bigWsol=getRealWsol(allWsolTx);
+        var wsolFromFP=allWsolTx.filter(function(t){return t.fromUserAccount===fp;});
+        var wsolToFP=allWsolTx.filter(function(t){return t.toUserAccount===fp;});
+        if(bigWsol>0.001){
+          if(nonWsolToks.length){
+            if(wsolFromFP.length){
+              var sent2=wsolFromFP.reduce(function(a,t){return a+Number(t.tokenAmount);},0);
+              return sent2<bigWsol*0.5?bigWsol:-bigWsol;
+            }
+            if(wsolToFP.length)return bigWsol;
+          }
+        }
+
+        // 4d. Multiple small native SOL transfers FROM wallet = buys
+        // (DFLOW UNKNOWN pattern: wallet sends small SOL to multiple pools)
+        var smallNatFrom=nt.filter(function(n){return isWallet(n.fromUserAccount)&&n.amount>=50000;});
+        var smallNatTo=nt.filter(function(n){return isWallet(n.toUserAccount)&&n.amount>=50000;});
+        var totalSmallOut=smallNatFrom.reduce(function(a,n){return a+(n.amount/1e9);},0);
+        var totalSmallIn=smallNatTo.reduce(function(a,n){return a+(n.amount/1e9);},0);
+        if(totalSmallOut>0.001&&nonWsolToks.length)return-totalSmallOut;
+        if(totalSmallIn>0.001&&nonWsolToks.length)return totalSmallIn;
+
+        // 4e. Stablecoin swap
+        if(nonWsolToks.length&&stableToks.length)return 0;
+      }
+
+      return 0;
+    }
+    return 0;
+  }
+
+  // ── 3. Non-DEX: direct native SOL net ───────────────────────────────────────
+  var sigNat=nt.filter(function(n){return n.amount>=100000&&(isWallet(n.toUserAccount)||isWallet(n.fromUserAccount));});
+  var net=sigNat.reduce(function(a,n){if(isWallet(n.toUserAccount))return a+(n.amount/1e9);if(isWallet(n.fromUserAccount))return a-(n.amount/1e9);return a;},0);
+  if(Math.abs(net)>0.0001)return net;
+
+  // ── 4. Non-DEX WSOL fallback ─────────────────────────────────────────────────
+  return tt.filter(function(t){return t.mint===WSOL&&(isWallet(t.toUserAccount)||isWallet(t.fromUserAccount));})
+    .reduce(function(a,t){if(isWallet(t.toUserAccount))return a+Number(t.tokenAmount);if(isWallet(t.fromUserAccount))return a-Number(t.tokenAmount);return a;},0);
+}
+
+// Returns the "input token" info for token→token swaps where SOL/WSOL wasn't used.
+// Returns null if SOL or WSOL was the input (handled by netSOLforDisplay instead).
+function getInputTokenForDisplay(tx, wallet) {
+  var tt = tx.tokenTransfers || [];
+  var net = netSOLforDisplay(tx, wallet);
+  if (Math.abs(net) > 0.0001) return null; // SOL/WSOL was the input, no need
+  // Find a non-WSOL token that LEFT the wallet (the spend token)
+  var spent = tt.filter(function(t) {
+    return t.fromUserAccount === wallet && t.mint !== WSOL;
+  }).sort(function(a,b){ return Number(b.tokenAmount)-Number(a.tokenAmount); });
+  if (!spent.length) return null;
+  return spent[0]; // {mint, tokenAmount, symbol}
+}
+
+function dexLink(symbol, mint) {
+  if (!mint || mint === WSOL) return symbol;
+  return '<a href="https://dexscreener.com/solana/' + mint + '" target="_blank" style="color:inherit;text-decoration:underline;text-decoration-style:dotted;cursor:pointer" title="View on DexScreener">' + symbol + '</a>';
+}
+
+function buildSwapDesc(tx,wallet,symCache){
+  var tt=tx.tokenTransfers||[];var net=netSOLforDisplay(tx,wallet);
+  function bestSym(t){return (t&&t.symbol)||(symCache&&t&&symCache[t.mint])||STABLES[t&&t.mint]||(t&&t.mint?t.mint.slice(0,8):'???');}
+  // Sparse tx: empty transfers but valid description
+  var _ttAll2=tx.tokenTransfers||[];var _ntAll2=tx.nativeTransfers||[];
+  if(_ttAll2.length===0&&_ntAll2.length===0){
+    var _dsc=tx.description||'';
+    var _dm=_dsc.match(/swapped?\s+([\d,.]+)\s+(\S+)\s+for\s+([\d,.]+)\s+(\S+)/i);
+    if(_dm){
+      var _inA=parseFloat(_dm[1].replace(/,/g,''));
+      var _inT=(_dm[2]||'').replace(/[^a-zA-Z0-9]/g,'');
+      var _outA=parseFloat(_dm[3].replace(/,/g,''));
+      var _outT=(_dm[4]||'').replace(/[^a-zA-Z0-9]/g,'');
+      var _inSOL=_inT.toUpperCase()==='WSOL'||_inT.toUpperCase()==='SOL';
+      var _outSOL=_outT.toUpperCase()==='WSOL'||_outT.toUpperCase()==='SOL';
+      if(_inSOL&&!_outSOL&&_inA>0&&_outA>0)return 'Bought '+fmtAmt(_outA)+' '+_outT+' for '+_inA.toFixed(3)+' SOL';
+      if(!_inSOL&&_outSOL&&_inA>0&&_outA>0)return 'Sold '+fmtAmt(_inA)+' '+_inT+' for '+_outA.toFixed(3)+' SOL';
+      if(!_inSOL&&!_outSOL&&_inA>0&&_outA>0)return 'Swapped '+fmtAmt(_inA)+' '+_inT+' → '+fmtAmt(_outA)+' '+_outT;
+    }
+  }
+
+  // Use expanded wallet identity (covers ATAs) for token transfer detection.
+  // For OKX-routed txs, getWalletAddrs over-expands to include router/vault addresses
+  // (because the wallet sends tokens directly to the OKX vault). Instead, use only
+  // accountData-confirmed ATAs, which are verified by on-chain balance changes.
+  var _isOkxDesc=(tx.source||'').toUpperCase().indexOf('OKX')>=0||(tx.description||'').toUpperCase().indexOf('OKX')>=0;
+  var wAddrs;
+  if(_isOkxDesc&&(tx.accountData||[]).length){
+    wAddrs={};wAddrs[wallet]=true;
+    (tx.accountData||[]).forEach(function(ac){
+      (ac.tokenBalanceChanges||[]).forEach(function(tb){
+        if(tb.userAccount===wallet&&ac.account)wAddrs[ac.account]=true;
+      });
+    });
+  }else{
+    wAddrs=getWalletAddrs(tx,wallet);
+  }
+  function isW(a){return !!wAddrs[a];}
+  var sent=tt.filter(function(t){return isW(t.fromUserAccount)&&t.mint!==WSOL;}).sort(function(a,b){return Number(b.tokenAmount)-Number(a.tokenAmount);});
+  var rec=tt.filter(function(t){return isW(t.toUserAccount)&&t.mint!==WSOL;}).sort(function(a,b){return Number(b.tokenAmount)-Number(a.tokenAmount);});
+
+  // ── Token→Token swap via DFlow/Pump-AMM routing artefact fix ─────────────────
+  // getWalletAddrs over-expands to AMM pool addresses, causing the same token mint
+  // to appear on both sides of sent/rec (pool↔pool routing noise). When this is
+  // detected AND net SOL ≈ 0, rebuild from first-principles:
+  //   sent = tokens the wallet itself sends directly (fromUserAccount===wallet)
+  //   rec  = tokens flowing to wallet that are NOT one of the sent mints
+  if(sent.length&&rec.length&&sent[0].mint===rec[0].mint&&Math.abs(net)<0.001){
+    var _directSent2=tt.filter(function(t){
+      return t.fromUserAccount===wallet&&t.mint!==WSOL&&!STABLES[t.mint];
+    }).sort(function(a,b){return Number(b.tokenAmount)-Number(a.tokenAmount);});
+    var _sentMints2={};
+    _directSent2.forEach(function(t){_sentMints2[t.mint]=true;});
+    var _recAlt2=tt.filter(function(t){
+      return t.toUserAccount===wallet&&t.mint!==WSOL&&!STABLES[t.mint]&&!_sentMints2[t.mint];
+    }).sort(function(a,b){return Number(b.tokenAmount)-Number(a.tokenAmount);});
+    if(_directSent2.length&&_recAlt2.length){
+      sent=_directSent2;
+      rec=_recAlt2;
+    }
+  }
+
+  // ── Helius swap event: most reliable token identity for complex routes ────────
+  // Jupiter/DFlow multi-hop routes often deliver tokens to an ATA, not the wallet address.
+  // tx.events.swap.tokenOutputs / tokenInputs tell us the actual swap tokens.
+  var swapEvent=tx.events&&tx.events.swap;
+
+  // ── Swap-event stablecoin buy/sell: authoritative early-exit ─────────────────
+  // getWalletAddrs over-expands to include AMM pool addresses when the wallet sends
+  // WSOL to them as routing intermediaries. This pollutes sent/rec: pool→wallet token
+  // transfers get attributed to both sides, causing same-mint cancellation and a
+  // fallthrough to the raw (often wrong) Helius description.
+  // Fix: when net SOL ≈ 0 and the swap event clearly identifies a stablecoin input
+  // paired with a non-stable token output, use the swap event directly.
+  if(swapEvent&&Math.abs(net)<0.001){
+    var _evIns=swapEvent.tokenInputs||[];
+    var _evOuts=swapEvent.tokenOutputs||[];
+    // Find the dominant non-WSOL input mint (largest single transfer amount)
+    var _evInByMint={};
+    _evIns.forEach(function(t){
+      if(!t.mint||t.mint===WSOL)return;
+      var _raw=t.rawTokenAmount;
+      var _dec=_raw&&Number(_raw.decimals)||6;
+      var _amt=_raw?Number(_raw.tokenAmount)/Math.pow(10,_dec):Number(t.tokenAmount)||0;
+      if(_amt>(_evInByMint[t.mint]||0))_evInByMint[t.mint]=_amt;
+    });
+    // Find the dominant non-WSOL, non-stable output mint (sum all transfers of that mint)
+    var _evOutByMint={};
+    _evOuts.forEach(function(t){
+      if(!t.mint||t.mint===WSOL||STABLES[t.mint])return;
+      var _raw=t.rawTokenAmount;
+      var _dec=_raw&&Number(_raw.decimals)||6;
+      var _amt=_raw?Number(_raw.tokenAmount)/Math.pow(10,_dec):Number(t.tokenAmount)||0;
+      _evOutByMint[t.mint]=(_evOutByMint[t.mint]||0)+_amt;
+    });
+    var _evInMints=Object.keys(_evInByMint);
+    var _evOutMints=Object.keys(_evOutByMint);
+    if(_evInMints.length&&_evOutMints.length){
+      var _domInMint=_evInMints.reduce(function(a,m){return _evInByMint[m]>_evInByMint[a]?m:a;},_evInMints[0]);
+      var _domOutMint=_evOutMints.reduce(function(a,m){return _evOutByMint[m]>_evOutByMint[a]?m:a;},_evOutMints[0]);
+      var _domInAmt=_evInByMint[_domInMint];
+      var _domOutAmt=_evOutByMint[_domOutMint];
+      var _domInStable=!!STABLES[_domInMint];
+      var _domOutSym=bestSym({mint:_domOutMint});
+      if(_domInStable&&_domOutAmt>0&&_domInAmt>0){
+        // Stablecoin → token buy confirmed by swap event
+        return'Bought '+fmtAmt(_domOutAmt)+' '+dexLink(_domOutSym,_domOutMint)+' for '+fmtAmt(_domInAmt)+' '+STABLES[_domInMint];
+      }
+    }
+    // Also handle stable output (token → stablecoin sell)
+    var _evOutStableByMint={};
+    _evOuts.forEach(function(t){
+      if(!t.mint||t.mint===WSOL||!STABLES[t.mint])return;
+      var _raw=t.rawTokenAmount;
+      var _dec=_raw&&Number(_raw.decimals)||6;
+      var _amt=_raw?Number(_raw.tokenAmount)/Math.pow(10,_dec):Number(t.tokenAmount)||0;
+      if(_amt>(_evOutStableByMint[t.mint]||0))_evOutStableByMint[t.mint]=_amt;
+    });
+    var _evInNonStableByMint={};
+    _evIns.forEach(function(t){
+      if(!t.mint||t.mint===WSOL||STABLES[t.mint])return;
+      var _raw=t.rawTokenAmount;
+      var _dec=_raw&&Number(_raw.decimals)||6;
+      var _amt=_raw?Number(_raw.tokenAmount)/Math.pow(10,_dec):Number(t.tokenAmount)||0;
+      _evInNonStableByMint[t.mint]=(_evInNonStableByMint[t.mint]||0)+_amt;
+    });
+    var _evOutStableMints=Object.keys(_evOutStableByMint);
+    var _evInNonStableMints=Object.keys(_evInNonStableByMint);
+    if(_evInNonStableMints.length&&_evOutStableMints.length){
+      var _domSellMint=_evInNonStableMints.reduce(function(a,m){return _evInNonStableByMint[m]>_evInNonStableByMint[a]?m:a;},_evInNonStableMints[0]);
+      var _domSellStableMint=_evOutStableMints.reduce(function(a,m){return _evOutStableByMint[m]>_evOutStableByMint[a]?m:a;},_evOutStableMints[0]);
+      var _domSellAmt=_evInNonStableByMint[_domSellMint];
+      var _domSellOutAmt=_evOutStableByMint[_domSellStableMint];
+      if(_domSellAmt>0&&_domSellOutAmt>0){
+        var _domSellSym=bestSym({mint:_domSellMint});
+        return'Sold '+fmtAmt(_domSellAmt)+' '+dexLink(_domSellSym,_domSellMint)+' for '+fmtAmt(_domSellOutAmt)+' '+STABLES[_domSellStableMint];
+      }
+    }
+  }
+
+  if(swapEvent&&!rec.length&&!sent.length){
+    var tOuts=(swapEvent.tokenOutputs||[]).filter(function(t){return t.mint&&t.mint!==WSOL;});
+    var tIns=(swapEvent.tokenInputs||[]).filter(function(t){return t.mint&&t.mint!==WSOL;});
+    // Rebuild rec/sent from swap event data
+    if(tOuts.length)rec=tOuts.map(function(t){return{mint:t.mint,symbol:t.symbol||t.mint.slice(0,8),tokenAmount:Number(t.rawTokenAmount&&t.rawTokenAmount.tokenAmount)||Number(t.tokenAmount)||0};});
+    if(tIns.length)sent=tIns.map(function(t){return{mint:t.mint,symbol:t.symbol||t.mint.slice(0,8),tokenAmount:Number(t.rawTokenAmount&&t.rawTokenAmount.tokenAmount)||Number(t.tokenAmount)||0};});
+  }
+
+  // ── Fallback: wallet's ATA used instead of wallet address in some Helius responses.
+  // When sent/rec are empty, look at ALL non-WSOL/non-stable token transfers in tx. ──
+  if(isTradeLike(tx)){
+    // All non-WSOL tokens in tx, sorted by amount descending
+    var anyNonWsol=tt.filter(function(t){return t.mint&&t.mint!==WSOL&&!STABLES[t.mint];})
+      .sort(function(a,b){return Number(b.tokenAmount)-Number(a.tokenAmount);});
+
+    // ── Jupiter ATA-only routing: wallet not in any tokenTransfer ──────────────
+    // Section 1b of netSOLforDisplay already determined direction and WSOL amount.
+    // Here we find the correct token and quantity using accountData tokenBalanceChanges,
+    // which reliably shows which tokens moved for which accounts (buyers/sellers).
+    var _jupAtaWalletInTT=tt.some(function(t){
+      return t.fromUserAccount===wallet||t.toUserAccount===wallet;
+    });
+    if(!_jupAtaWalletInTT&&Math.abs(net)>0.001&&!rec.length&&!sent.length){
+      // Rebuild tok/wsol per account from accountData (same logic as section 1b)
+      var _bsdTokPer={};var _bsdTokMint={};var _bsdWsolAcc={};
+      (tx.accountData||[]).forEach(function(ac){
+        (ac.tokenBalanceChanges||[]).forEach(function(tb){
+          var mint=tb.mint;var ua=tb.userAccount;if(!ua)return;
+          var raw=Number((tb.rawTokenAmount&&tb.rawTokenAmount.tokenAmount)||0);
+          var dec=Number((tb.rawTokenAmount&&tb.rawTokenAmount.decimals)||0);
+          var amt=dec>0?raw/Math.pow(10,dec):raw;
+          if(mint===WSOL){_bsdWsolAcc[ua]=(_bsdWsolAcc[ua]||0)+amt;return;}
+          if(!mint||STABLES[mint])return;
+          _bsdTokPer[ua]=(_bsdTokPer[ua]||0)+amt;
+          if(Math.abs(amt)>Math.abs((_bsdTokPer[ua]||0)-amt))_bsdTokMint[ua]=mint;
+        });
+      });
+      var _bsdWsolTT={};
+      tt.forEach(function(t){
+        if(t.mint!==WSOL)return;
+        var amt=Number(t.tokenAmount)||0;
+        if(t.fromUserAccount)_bsdWsolTT[t.fromUserAccount]=(_bsdWsolTT[t.fromUserAccount]||0)-amt;
+        if(t.toUserAccount)_bsdWsolTT[t.toUserAccount]=(_bsdWsolTT[t.toUserAccount]||0)+amt;
+      });
+      var _bsdWsol={};
+      Object.keys(_bsdWsolTT).forEach(function(ua){_bsdWsol[ua]=_bsdWsolTT[ua];});
+      Object.keys(_bsdWsolAcc).forEach(function(ua){_bsdWsol[ua]=_bsdWsolAcc[ua];});
+      // Find buyers (wsol<0, tok>0) and sellers (wsol>0, tok<0)
+      var _bsdBuyers=[];var _bsdSellers=[];
+      Object.keys(_bsdTokPer).forEach(function(ua){
+        var w=_bsdWsol[ua]||0;var tok=_bsdTokPer[ua];
+        if(w<-0.001&&tok>0)_bsdBuyers.push({ua:ua,tok:tok,mint:_bsdTokMint[ua]});
+        else if(w>0.001&&tok<0)_bsdSellers.push({ua:ua,tok:tok,mint:_bsdTokMint[ua]});
+      });
+      // Resolve direction using same logic as section 1b of netSOLforDisplay
+      var _bsdDir=null;
+      // Native SOL fallback: no WSOL signals at all, use nativeBalanceChange per userAccount
+      if(!_bsdBuyers.length&&!_bsdSellers.length){
+        var _bsdNatPer={};
+        (tx.accountData||[]).forEach(function(ac){_bsdNatPer[ac.account]=ac.nativeBalanceChange/1e9;});
+        Object.keys(_bsdTokPer).forEach(function(ua){
+          var tok=_bsdTokPer[ua];var nat=_bsdNatPer[ua]||0;
+          if(tok<0&&nat>0.001){_bsdDir='SELL';}  // sent token, received native SOL = wallet's ATA = SELL
+          else if(tok>0&&nat<-0.001&&!_bsdDir){_bsdDir='BUY';}
+        });
+      }
+      if(_bsdSellers.length>1){_bsdDir='SELL';}
+      else if(_bsdBuyers.length&&!_bsdSellers.length){_bsdDir='BUY';}
+      else if(_bsdSellers.length&&!_bsdBuyers.length){_bsdDir='SELL';}
+      else if(_bsdBuyers.length&&_bsdSellers.length){
+        // Single buyer + single seller: use cross-tx freq to identify wallet vs pool
+        // Signal 0: buyer is a known proxy router (e.g. solanarent.sol) acting on behalf of feePayer -> BUY
+        if(KNOWN_PROXY_ROUTERS[_bsdBuyers[0].ua]){_bsdDir='BUY';}
+        else{
+          var _bsdBuyerWsolTo=(_nonJupWsolTo[_bsdBuyers[0].ua]||0);
+          var _bsdBuyerFreq=(_nonJupAtaFreq[_bsdBuyers[0].ua]||0);
+          var _bsdSellerWsolTo=(_nonJupWsolTo[_bsdSellers[0].ua]||0);
+          if(_bsdBuyerWsolTo>_ROUTING_WSOL_THRESHOLD&&_bsdBuyerWsolTo>_bsdSellerWsolTo&&!(_nonJupTokFreq[_bsdBuyers[0].ua]||0)){_bsdDir='SELL';}
+          else if(_bsdSellerWsolTo>0&&_bsdSellerWsolTo>=_bsdBuyerWsolTo){_bsdDir='SELL';}
+          else if(_bsdBuyerFreq===0){_bsdDir='SELL';}
+          else{_bsdDir='BUY';}
+        }
+      }
+      if(_bsdDir==='BUY'&&_bsdBuyers.length){
+        var _bb=_bsdBuyers[0];
+        var _bsym=_bb.mint?(symCache[_bb.mint]||_bb.mint.slice(0,8)):'???';
+        rec=[{mint:_bb.mint,symbol:_bsym,tokenAmount:Math.abs(_bb.tok)}];
+      }else if(_bsdDir==='SELL'&&_bsdSellers.length){
+        var _sm=_bsdSellers[0].mint;
+        var _sq=_bsdSellers.reduce(function(a,s){return s.mint===_sm?a+Math.abs(s.tok):a;},0);
+        var _ssym=_sm?(symCache[_sm]||_sm.slice(0,8)):'???';
+        sent=[{mint:_sm,symbol:_ssym,tokenAmount:_sq}];
+      }else if(anyNonWsol.length){
+        if(net<-0.001)rec=[anyNonWsol[0]];
+        else sent=[anyNonWsol[0]];
+      }
+    }
+
+    if(!rec.length&&!sent.length&&anyNonWsol.length){
+      if(net<-0.001)rec=[anyNonWsol[0]];       // net negative = buy
+      else if(net>0.001)sent=[anyNonWsol[0]];  // net positive = sell
+      // net=0: use description to determine direction
+      else{
+        var _d=tx.description||'';
+        var _sellD=_d.match(/swapped?\s+[\d,. ]+\s+(\S+)\s+for\s+[\d,.]+\s+\S/i);
+        var _buyD=_d.match(/swapped?\s+[\d,.]+\s+(?:WSOL|SOL|USDC|USDT)\s+for\s+[\d,. ]+\s+(\S+)/i);
+        if(_sellD)sent=[anyNonWsol[0]];    // description says we sold a token
+        else if(_buyD)rec=[anyNonWsol[0]]; // description says we bought a token
+        else if(anyNonWsol.length)sent=[anyNonWsol[0]]; // default: token in tx = sold
+      }
+    }
+    // Sell where token left ATA: sent empty but net>0
+    if(!sent.length&&rec.length===0&&net>0.001&&anyNonWsol.length){
+      sent=[anyNonWsol[0]];
+    }
+  }
+
+  // ── SOL or WSOL was the spend token (most common) ───────────────────────────
+  if(Math.abs(net)>0.0001){
+    var label=Math.abs(net).toFixed(3)+' SOL';
+    if(rec.length&&net<-0.0001)return'Bought '+fmtAmt(rec[0].tokenAmount)+' '+dexLink(bestSym(rec[0]),rec[0].mint)+' for '+label;
+    if(sent.length&&net>0.0001)return'Sold '+fmtAmt(sent[0].tokenAmount)+' '+dexLink(bestSym(sent[0]),sent[0].mint)+' for '+label;
+    // Net is significant but no token found — check if it's a stable→SOL or SOL→stable swap
+    var _d2=tx.description||'';
+    var _fm=_d2.match(/swapped? ([\d,.]+) (\S+) for ([\d,.]+) (\S+)/i);
+    if(_fm){
+      var _iT=_fm[2].replace(/[^a-zA-Z0-9]/g,'').toUpperCase();
+      var _oT=_fm[4].replace(/[^a-zA-Z0-9]/g,'').toUpperCase();
+      var _iS=_iT==='USDC'||_iT==='USDT';
+      var _oS=_oT==='WSOL'||_oT==='SOL';
+      var _iSOL=_iT==='WSOL'||_iT==='SOL';
+      var _oStb=_oT==='USDC'||_oT==='USDT';
+      var _inAmt=parseFloat(_fm[1].replace(/,/g,''));
+      if(_iS&&_oS)return'Bought '+label+' with '+fmtAmt(_inAmt)+' '+_iT; // USDC→WSOL
+      if(_iSOL&&_oStb)return'Sold '+label+' SOL for '+fmtAmt(parseFloat(_fm[3].replace(/,/g,'')))+' '+_oT;
+    }
+    return(net<0?'Bought':'Sold')+' via '+(tx.source||'DEX')+' for '+label;
+  }
+
+  // ── Token → Token swap (memecoin used to buy another memecoin, USDC→token etc.) ──
+  if(sent.length&&rec.length&&sent[0].mint!==rec[0].mint){
+    var inputIsStable=!!STABLES[sent[0].mint];
+    var outputIsStable=!!STABLES[rec[0].mint];
+    var inputSym=bestSym(sent[0]);var outputSym=bestSym(rec[0]);
+    if(inputIsStable)return'Bought '+fmtAmt(rec[0].tokenAmount)+' '+dexLink(outputSym,rec[0].mint)+' for '+fmtAmt(sent[0].tokenAmount)+' '+inputSym;
+    if(outputIsStable)return'Sold '+fmtAmt(sent[0].tokenAmount)+' '+dexLink(inputSym,sent[0].mint)+' for '+fmtAmt(rec[0].tokenAmount)+' '+outputSym;
+    return'Swapped '+fmtAmt(sent[0].tokenAmount)+' '+dexLink(inputSym,sent[0].mint)+' → '+fmtAmt(rec[0].tokenAmount)+' '+dexLink(outputSym,rec[0].mint);
+  }
+
+  // ── Sell with stablecoin output (token→USDC/USDT via Jupiter, net SOL = 0) ───
+  // sent has the token, stable received anywhere in tx
+  if(sent.length&&!rec.length&&Math.abs(net)<0.001){
+    var stableOut=tt.filter(function(t){return STABLES[t.mint];}).sort(function(a,b){return Number(b.tokenAmount)-Number(a.tokenAmount);});
+    if(stableOut.length){
+      var stSym=STABLES[stableOut[0].mint]||bestSym(stableOut[0]);
+      return'Sold '+fmtAmt(sent[0].tokenAmount)+' '+dexLink(bestSym(sent[0]),sent[0].mint)+' for '+fmtAmt(stableOut[0].tokenAmount)+' '+stSym;
+    }
+  }
+  // ── Buy with stablecoin input (USDC→token via Jupiter, net SOL = 0) ──────────
+  if(rec.length&&!sent.length&&Math.abs(net)<0.001){
+    var stableIn=tt.filter(function(t){return STABLES[t.mint];}).sort(function(a,b){return Number(b.tokenAmount)-Number(a.tokenAmount);});
+    if(stableIn.length){
+      var stInSym=STABLES[stableIn[0].mint]||bestSym(stableIn[0]);
+      return'Bought '+fmtAmt(rec[0].tokenAmount)+' '+dexLink(bestSym(rec[0]),rec[0].mint)+' for '+fmtAmt(stableIn[0].tokenAmount)+' '+stInSym;
+    }
+  }
+
+  // ── Only received a token ─────────────────────────────────────────────────────
+  if(rec.length&&!sent.length)return'Bought '+fmtAmt(rec[0].tokenAmount)+' '+dexLink(bestSym(rec[0]),rec[0].mint);
+  // ── Only sent a token ─────────────────────────────────────────────────────────
+  if(sent.length&&!rec.length)return'Sold '+fmtAmt(sent[0].tokenAmount)+' '+dexLink(bestSym(sent[0]),sent[0].mint);
+
+  return tx.description||tx.type||'Transaction';
+}
+
+async function callClaude(aKey,payload,system){
+  var r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key':aKey,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body:JSON.stringify({
+      model:'claude-haiku-4-5-20251001',max_tokens:1200,
+      system:system,
+      messages:[{role:'user',content:JSON.stringify(payload,null,2)}]
+    })
+  });
+  if(!r.ok){var t=await r.text().catch(function(){return'';});throw new Error('Claude '+r.status+': '+t.slice(0,80));}
+  var d=await r.json();
+  return(d.content&&d.content[0]&&d.content[0].text)?d.content[0].text:'';
+}
+
+var JUPITER_CACHE=null;
+async function loadJupiterList(){
+  if(JUPITER_CACHE)return JUPITER_CACHE;
+  try{
+    var r=await fetch('https://tokens.jup.ag/tokens?tags=verified,community,unknown');
+    if(r.ok){var list=await r.json();JUPITER_CACHE={};list.forEach(function(t){if(t.address&&t.symbol)JUPITER_CACHE[t.address]=t.symbol;});console.log('Jupiter loaded:',Object.keys(JUPITER_CACHE).length);}
+  }catch(e){JUPITER_CACHE={};}
+  return JUPITER_CACHE;
+}
+
+async function enrichSymbols(hKey,bKey,pnlData,symCache){
+  // Helius token-metadata
+  try{
+    var mints=(pnlData.topTokens||[]).map(function(t){return t.mint;}).filter(function(m){return m&&m.length>20;}).slice(0,50);
+    if(mints.length&&hKey){
+      var r=await fetch('https://api.helius.xyz/v0/token-metadata?api-key='+hKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mintAccounts:mints,includeOffChain:false,disableCache:false})});
+      if(r.ok){var data=await r.json();if(Array.isArray(data)){data.forEach(function(item){if(!item)return;var mint=item.account;var sym=null;if(item.onChainMetadata&&item.onChainMetadata.metadata&&item.onChainMetadata.metadata.data)sym=item.onChainMetadata.metadata.data.symbol;if(!sym&&item.legacyMetadata)sym=item.legacyMetadata.symbol;if(sym&&mint)symCache[mint]=sym.trim();});}}
+    }
+  }catch(e){console.warn('Token meta:',e.message);}
+  // getAssetBatch
+  try{
+    var unknown=(pnlData.topTokens||[]).filter(function(t){return t.mint&&(!symCache[t.mint]||symCache[t.mint]==='[ ]'||symCache[t.mint]===t.mint.slice(0,8));}).map(function(t){return t.mint;}).slice(0,25);
+    if(unknown.length&&hKey){
+      var r2=await fetch('https://mainnet.helius-rpc.com/?api-key='+hKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:'ws',method:'getAssetBatch',params:{ids:unknown}})});
+      if(r2.ok){var d2=await r2.json();(d2.result||[]).forEach(function(asset){if(!asset)return;var mint=asset.id;var sym=null;if(asset.content&&asset.content.metadata)sym=asset.content.metadata.symbol||asset.content.metadata.name;if(!sym&&asset.token_info)sym=asset.token_info.symbol;if(sym&&mint)symCache[mint]=sym.trim().slice(0,20);});}
+    }
+  }catch(e){console.warn('getAssetBatch:',e.message);}
+  // DexScreener
+  try{
+    var dexMints=(pnlData.topTokens||[]).filter(function(t){return t.mint&&(!symCache[t.mint]||symCache[t.mint]==='[ ]'||symCache[t.mint]===t.mint.slice(0,8)||symCache[t.mint].length<=4);}).map(function(t){return t.mint;}).slice(0,30);
+    if(dexMints.length){
+      var r3=await fetch('https://api.dexscreener.com/tokens/v1/solana/'+dexMints.join(','));
+      if(r3.ok){var d3=await r3.json();var pairs=Array.isArray(d3)?d3:(d3.pairs||[]);var seen={};pairs.forEach(function(pair){if(!pair||!pair.baseToken)return;var mint=pair.baseToken.address;if(mint&&pair.baseToken.symbol&&!seen[mint]){seen[mint]=true;symCache[mint]=pair.baseToken.symbol;}});}
+    }
+  }catch(e){console.warn('DexScreener:',e.message);}
+  // Jupiter
+  try{
+    var jupList=await loadJupiterList();
+    (pnlData.topTokens||[]).forEach(function(t){if(t.mint&&jupList[t.mint]&&(!symCache[t.mint]||symCache[t.mint]===t.mint.slice(0,8)||symCache[t.mint]==='[ ]'))symCache[t.mint]=jupList[t.mint];});
+  }catch(e){}
+}
+
+// ─── Depth picker helpers ────────────────────────────────────────────────────
+var _depthMeta = {
+  1000:  { pages: 10,  time: '~5s' },
+  2000:  { pages: 20,  time: '~15s' },
+  5000:  { pages: 50,  time: '~35s' },
+  10000: { pages: 100, time: '~75s' }
+};
+
+function selectDepth(btn) {
+  document.querySelectorAll('.depth-chip').forEach(function(c){c.classList.remove('selected');});
+  btn.classList.add('selected');
+  var d = parseInt(btn.dataset.depth);
+  _depthLimit = d;
+  var meta = _depthMeta[d] || {};
+  document.getElementById('depthNote').textContent = '~' + meta.pages + ' pages · ' + meta.time;
+}
+
+function cancelDepth() {
+  document.getElementById('depthPicker').style.display = 'none';
+  _pendingWalletAddr = null;
+  document.getElementById('wGoBtn').disabled = false;
+}
+
+function confirmDepthAndRun() {
+  document.getElementById('depthPicker').style.display = 'none';
+  runWalletAnalysis(_pendingWalletAddr);
+}
+
+// Entry points — all funnel through showDepthPicker first
+function wLookup(addr){
+  document.getElementById('walletInput').value = addr;
+  showDepthPicker(addr);
+}
+
+function goWallet(){
+  var wallet = document.getElementById('walletInput').value.trim();
+  var hKey = document.getElementById('heliusKey').value.trim();
+  var bKey = '';
+  var errEl = document.getElementById('wErrEl');
+  errEl.style.display = 'none';
+  if(!hKey){errEl.innerHTML='Helius API key required.';errEl.style.display='block';return;}
+  if(!wallet||wallet.length<32){errEl.innerHTML='Enter a valid Solana wallet address.';errEl.style.display='block';return;}
+  showDepthPicker(wallet);
+}
+
+function showDepthPicker(addr) {
+  _pendingWalletAddr = addr;
+  // Reset chip to 1000 as default, update note
+  document.querySelectorAll('.depth-chip').forEach(function(c){
+    c.classList.toggle('selected', parseInt(c.dataset.depth) === _depthLimit);
+  });
+  var meta = _depthMeta[_depthLimit] || _depthMeta[1000];
+  document.getElementById('depthNote').textContent = '~' + meta.pages + ' pages · ' + meta.time;
+  document.getElementById('wResultEl').style.display = 'none';
+  document.getElementById('wErrEl').style.display = 'none';
+  document.getElementById('wLoadingEl').style.display = 'none';
+  document.getElementById('depthPicker').style.display = 'block';
+  document.getElementById('wGoBtn').disabled = true;
+  setTimeout(function(){document.getElementById('depthPicker').scrollIntoView({behavior:'smooth',block:'nearest'});},50);
+}
+
+// ─── The actual analysis runner (called after depth is confirmed) ─────────────
+async function runWalletAnalysis(wallet) {
+  var hKey=document.getElementById('heliusKey').value.trim();
+  var bKey='';
+  var aKey=document.getElementById('anthropicKey').value.trim();
+  var btn=document.getElementById('wGoBtn');
+  document.getElementById('wErrEl').style.display='none';
+  document.getElementById('wResultEl').style.display='none';
+  btn.disabled=true;
+  document.getElementById('wLoadingEl').style.display='flex';setWStep(0,null,'ws');
+
+  var D={txs:[],balances:null,pnlData:null,identity:null,symCache:{},heldMints:{}};
+  try{
+    D.txs=await fetchAllTxs(wallet,hKey,function(n,pg,totalPg){setWStep(0,'Fetching transactions — '+n+' loaded (page '+pg+' / '+totalPg+')...','ws');});
+    setWStep(1,null,'ws');
+    try{
+      // Use Helius DAS getAssetsByOwner - more comprehensive than v1 balances
+      var dasOwnerRes=await fetch('https://mainnet.helius-rpc.com/?api-key='+hKey,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          jsonrpc:'2.0',id:'balances',
+          method:'getAssetsByOwner',
+          params:{
+            ownerAddress:wallet,
+            page:1,limit:200,
+            displayOptions:{showFungible:true,showNativeBalance:true,showZeroBalance:false}
+          }
+        })
+      });
+      if(dasOwnerRes.ok){
+        var dasOwner=await dasOwnerRes.json();
+        var dasItems=(dasOwner.result&&dasOwner.result.items)||[];
+        var nativeBal=dasOwner.result&&dasOwner.result.nativeBalance;
+        // Build balances object matching existing structure
+        D.balances={
+          nativeBalance:nativeBal?{
+            amount:nativeBal.lamports/1e9,
+            pricePerToken:nativeBal.price_per_sol||0
+          }:null,
+          tokens:dasItems
+            .filter(function(a){
+              // Include fungible tokens and also catch non-standard interfaces
+              // Exclude pure NFTs (NonFungible, ProgrammableNFT) and compressed NFTs
+              var iface=a.interface||'';
+              return iface!=='NonFungible'&&iface!=='ProgrammableNFT'&&iface!=='V1_NFT'&&iface!=='Custom'&&iface!=='MplCoreAsset';
+            })
+            .map(function(a){
+              var info=a.token_info||{};
+              var meta=(a.content&&a.content.metadata)||{};
+              var rawBal=info.balance||info.token_amount||0;
+              var dec=info.decimals||0;
+              var amt=rawBal>0?rawBal/Math.pow(10,dec):0;
+              var sym=info.symbol||meta.symbol||(a.content&&a.content.metadata&&a.content.metadata.name)||a.id.slice(0,8);
+              // Use STABLES map for well-known stablecoins to ensure they show correctly
+              if(typeof STABLES!=='undefined'&&STABLES[a.id])sym=STABLES[a.id];
+              var usdVal=null;
+              if(info.price_info&&info.price_info.total_price)usdVal=info.price_info.total_price;
+              else if(info.price_info&&info.price_info.price_per_token&&amt)usdVal=info.price_info.price_per_token*amt;
+              return{mint:a.id,symbol:sym,amount:amt,decimals:dec,valueUsd:usdVal};
+            })
+            .filter(function(t){return t.amount>0.000001;}) // allow tiny amounts through
+            .sort(function(a,b){return(b.valueUsd||0)-(a.valueUsd||0)})
+        };
+        console.log('DAS balances: native=',D.balances.nativeBalance&&D.balances.nativeBalance.amount,'tokens=',D.balances.tokens.length);
+        if(D.balances.tokens)D.balances.tokens.forEach(function(t){if(t.amount>0.01)D.heldMints[t.mint]=true;});
+      }
+    }catch(e){console.warn('DAS balances:',e.message);}
+    setWStep(2,'Analysing '+D.txs.length+' transactions...','ws');
+    D.symCache=buildSymbolCache(D.txs);
+    D.nonJupAtaFreq=buildNonJupAtaFreq(D.txs,wallet);
+    _nonJupAtaFreq=D.nonJupAtaFreq.freq||D.nonJupAtaFreq;
+    _nonJupWsolTo=D.nonJupAtaFreq.wsolTo||{};
+    _nonJupTokFreq=D.nonJupAtaFreq.tokFreq||{};
+    D.pnlData=calcPnL(D.txs,wallet,D.symCache);
+    await enrichSymbols(hKey,bKey,D.pnlData,D.symCache);
+    D.pnlData=calcPnL(D.txs,wallet,D.symCache);
+    D.outgoingTransfers = findOutgoingTransfers(D.txs, wallet, D.symCache);
+    console.log('Outgoing transfers found:', D.outgoingTransfers.length, 'tokens');
+    setWStep(3,null,'ws');
+    try{var idRes=await fetch('https://api.helius.xyz/v1/wallet/'+wallet+'/identity?api-key='+hKey);if(idRes.ok)D.identity=await idRes.json();}catch(e){}
+
+    // Check if this wallet address is itself a known DEX pair (pool) via DexScreener
+    try{
+      var dexRes=await fetch('https://api.dexscreener.com/latest/dex/pairs/solana/'+wallet);
+      if(dexRes.ok){
+        var dexData=await dexRes.json();
+        var pair=dexData&&(dexData.pair||(dexData.pairs&&dexData.pairs[0]));
+        if(pair&&pair.pairAddress&&pair.pairAddress.toLowerCase()===wallet.toLowerCase()){
+          var base=pair.baseToken&&pair.baseToken.symbol||'?';
+          var quote=pair.quoteToken&&pair.quoteToken.symbol||'?';
+          var dex=pair.dexId||'unknown DEX';
+          D.dexPairMatch=base+'/'+quote+' liquidity pool on '+dex;
+        }
+      }
+    }catch(e){console.warn('DexScreener pair check:',e.message);}
+
+    var solBal=D.balances&&D.balances.nativeBalance?D.balances.nativeBalance.amount:null;
+    var tokens=(D.balances&&D.balances.tokens)?D.balances.tokens.slice(0,20):[];
+    var pnl=D.pnlData||{};
+    var pnlTokens=pnl.topTokens||[];
+    var recentSwaps=D.txs.filter(function(tx){return!isRentTx(tx)&&!tx.transactionError;}).slice(0,30).map(function(tx){
+      var isSwap=isTradeLike(tx);
+      var net=isSwap?netSOLforDisplay(tx,wallet):0;
+      var desc=isSwap?buildSwapDesc(tx,wallet,D.symCache):(tx.description||tx.type||'Transaction');
+
+      var netLabel=null;
+      if(Math.abs(net)>0.0001){netLabel=net.toFixed(3)+' SOL';}
+      else if(isSwap){var spk=getInputTokenForDisplay(tx,wallet);if(spk){netLabel='~'+fmtAmt(spk.tokenAmount)+' '+(spk.symbol||STABLES[spk.mint]||spk.mint.slice(0,8));}}
+      return{type:tx.type,source:tx.source,timeAgo:timeAgo(tx.timestamp),description:desc,netSOL:netLabel};
+    });
+
+    var payload={
+      walletAddress:shortAddr(wallet),
+      knownIdentity:D.identity?D.identity.name:null,
+      solBalance:solBal!=null?fmt(solBal,4)+' SOL':null,
+      currentHoldings:tokens.map(function(t){return{symbol:t.symbol||t.mint.slice(0,8),amount:fmt(t.amount,2),usdValue:t.valueUsd?fmtUsd(t.valueUsd):null};}),
+      transactionHistory:{totalFetched:D.txs.length,recentActivity:recentSwaps}
+    };
+
+    setWStep(4,null,'ws');
+    var aiData=null;
+    if(aiEnabled()){
+      var WALLET_SYSTEM='You are a Solana on-chain analyst. Your job is to describe what you can see — nothing more. Do NOT estimate PnL, win rate, or profitability. You only have partial transaction history and current balances, which is not enough to calculate trading performance accurately. Return ONLY valid JSON: {"archetype":"active|inactive|degen|whale|bot|unknown","archetypeLabel":"2-3 word label","verdict":"one punchy sentence (under 12 words) describing observable behaviour only","verdictSub":"2-3 sentences describing what this wallet appears to be doing based on recent transactions and current holdings. Reference specific tokens and SOL amounts you can see. Do not make claims about profit or loss.","signals":[{"color":"green|amber|red","text":"specific observable fact with actual numbers from the data"}]}. Rules: 3-5 signals. Only state what is directly visible in the data. WSOL is wrapped SOL. SYSTEM_PROGRAM transactions are rent recovery, ignore. Jupiter/Raydium/Pump.fun are DEX routers not counterparties.';
+      try{
+        var raw=await callClaude(aKey,payload,WALLET_SYSTEM);
+        var clean=raw.replace(/```json|```/g,'').trim();
+        aiData=JSON.parse(clean);
+      }catch(e){
+        console.warn('Claude:',e.message);
+        aiData=null;
+      }
+    }
+    // Rule-based fallback when AI is off or fails
+    if(!aiData){
+      var txCount=D.txs.length;
+      var tokenCount=tokens.length;
+      var actLevel=txCount>200?'active':txCount>50?'moderate':'low activity';
+      var sigs=[];
+      if(txCount>0)sigs.push({color:'green',text:txCount+' transactions fetched'});
+      var _solPrice=D.balances&&D.balances.nativeBalance?D.balances.nativeBalance.pricePerToken:null;
+      var _solUsd=solBal&&_solPrice?solBal*_solPrice:null;
+      if(solBal!=null)sigs.push({color:'amber',text:'Current SOL balance: '+fmt(solBal,4)+' SOL'+(_solUsd?' ('+fmtUsd(_solUsd)+')':'')});
+      if(tokenCount>0)sigs.push({color:'amber',text:tokenCount+' token'+(tokenCount>1?'s':'')+' currently held'});
+      sigs.push({color:'amber',text:'Add an Anthropic key to get a plain-English AI summary of this wallet'});
+      aiData={
+        archetype:'unknown',
+        archetypeLabel:'Wallet Scanned',
+        verdict:txCount+' transactions — '+tokenCount+' tokens held',
+        verdictSub:'On-chain data retrieved. Add an Anthropic key and enable AI Analysis for a plain-English narrative of what this wallet is doing.',
+        signals:sigs
+      };
+    }
+    document.getElementById('wLoadingEl').style.display='none';
+    renderWallet(wallet,aiData,D);
+  }catch(e){
+    document.getElementById('wLoadingEl').style.display='none';
+    document.getElementById('wErrEl').innerHTML='Error: '+e.message;
+    document.getElementById('wErrEl').style.display='block';
+    console.error(e);
+  }finally{btn.disabled=false;}
+}
+
+function renderWallet(wallet,ai,D){
+  var el=document.getElementById('wResultEl');
+  var acMap={degen:'b-degen',smart:'b-smart',bot:'b-bot',whale:'b-whale',unknown:'b-unknown',active:'b-degen',inactive:'b-unknown'};
+  var ac=acMap[ai.archetype]||'b-unknown';
+  var solBal=D.balances&&D.balances.nativeBalance?D.balances.nativeBalance.amount:null;
+  var solPrice=D.balances&&D.balances.nativeBalance?D.balances.nativeBalance.pricePerToken:null;
+  var solUsd=solBal&&solPrice?solBal*solPrice:null;
+  var tokens=(D.balances&&D.balances.tokens)?D.balances.tokens.slice(0,30):[];
+
+  // Infrastructure banner
+  var KNOWN_AMM_ADDRS={'Ce6TQqeHB9R8f5gu1YqgmNYJcHLt4HVyFmUXJAqKBhb':true,'6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P':true,'JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4':true,'JUP4Fb2cqiRUcaTHdrPC8h2gNsA2ETXiPDD33WcGuJB':true,'9nnLbotNTcUhvbrsA6Mdkx45Sm82G35zo28AqUvjExn8':true,'5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1':true,'routeUGWgWzqBWFcrCfv8tritsqukccJPu3q5GPP3xS':true,'whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc':true};
+  var isInfrastructure=false;var infraReason='';
+  if(KNOWN_AMM_ADDRS[wallet]){isInfrastructure=true;infraReason='Known AMM program address';}
+  if(!isInfrastructure&&D.identity&&D.identity.name){var idLower=D.identity.name.toLowerCase();var infraKws=['amm','pool','market','authority','aggregator','vault','liquidity','lp ','raydium','orca','meteora','pumpswap','pump.fun'];for(var ki=0;ki<infraKws.length;ki++){if(idLower.indexOf(infraKws[ki])>=0){isInfrastructure=true;infraReason=D.identity.name;break;}}}
+  if(!isInfrastructure&&D.dexPairMatch){isInfrastructure=true;infraReason=D.dexPairMatch;}
+  var infraBanner='';
+  if(isInfrastructure){infraBanner='<div style="background:var(--adim);border:0.5px solid rgba(245,200,66,0.3);border-radius:var(--r);padding:14px 20px;margin-bottom:12px;display:flex;align-items:flex-start;gap:12px"><div style="font-size:18px;flex-shrink:0">⚠️</div><div><div style="font-family:monospace;font-size:11px;font-weight:700;color:var(--amber);margin-bottom:4px">INFRASTRUCTURE ADDRESS — NOT A TRADER</div><div style="font-family:monospace;font-size:11px;color:var(--text2)">'+infraReason+'</div><div style="font-family:monospace;font-size:10px;color:var(--text3);margin-top:4px">This appears to be an AMM pool or program account, not a human wallet.</div></div></div>';}
+
+  // Proxy router banner — detect if this wallet routes its Jupiter trades via a known proxy
+  // e.g. solanarent.sol acts as intermediary: it appears as buyer/seller in tokenTransfers
+  // while the actual wallet is only the feePayer. Flag this so the user understands the pattern.
+  var _proxyRouterNames={
+    'DWrFQUhwsbZeC13zFjFr8y3sTDykT2qMvYusJQ6zUMtR':'solanarent.sol'
+  };
+  var _proxyRouterDetected=null;
+  if(!isInfrastructure){
+    var _jupTxs=D.txs.filter(function(tx){return(tx.source||'').toUpperCase().indexOf('JUPITER')>=0&&!tx.transactionError;});
+    if(_jupTxs.length>0){
+      var _proxyCount={};
+      _jupTxs.forEach(function(tx){
+        var tt2=tx.tokenTransfers||[];
+        var walletInTT=tt2.some(function(t){return t.fromUserAccount===wallet||t.toUserAccount===wallet;});
+        if(walletInTT)return; // wallet appears directly — not proxy routed
+        tt2.forEach(function(t){
+          [t.fromUserAccount,t.toUserAccount].forEach(function(ua){
+            if(ua&&_proxyRouterNames[ua]){_proxyCount[ua]=(_proxyCount[ua]||0)+1;}
+          });
+        });
+        // Also check accountData
+        (tx.accountData||[]).forEach(function(ac){
+          (ac.tokenBalanceChanges||[]).forEach(function(tb){
+            var ua=tb.userAccount;
+            if(ua&&_proxyRouterNames[ua]){_proxyCount[ua]=(_proxyCount[ua]||0)+0.5;}
+          });
+        });
+      });
+      var _topProxy=null;var _topCount=0;
+      Object.keys(_proxyCount).forEach(function(ua){if(_proxyCount[ua]>_topCount){_topCount=_proxyCount[ua];_topProxy=ua;}});
+      // Flag if proxy appeared in at least 2 Jupiter txs (or 1 if that's all we have)
+      if(_topProxy&&_topCount>=Math.min(2,_jupTxs.length)){
+        _proxyRouterDetected={addr:_topProxy,name:_proxyRouterNames[_topProxy],count:Math.round(_topCount)};
+      }
+    }
+  }
+  var proxyBanner='';
+  if(_proxyRouterDetected){
+    proxyBanner='<div style="background:rgba(100,160,255,0.07);border:0.5px solid rgba(100,160,255,0.3);border-radius:var(--r);padding:14px 20px;margin-bottom:12px;display:flex;align-items:flex-start;gap:12px">'+
+      '<div style="font-size:18px;flex-shrink:0">🔀</div>'+
+      '<div><div style="font-family:monospace;font-size:11px;font-weight:700;color:#6aa0ff;margin-bottom:4px">PROXY ROUTER DETECTED — '+_proxyRouterDetected.name.toUpperCase()+'</div>'+
+      '<div style="font-family:monospace;font-size:11px;color:var(--text2)">This wallet routes its Jupiter swaps via <span style="color:#6aa0ff">'+_proxyRouterDetected.name+'</span> ('+_proxyRouterDetected.addr.slice(0,8)+'...) as an intermediary. '+
+      'The proxy executes trades on-chain on behalf of this wallet. Transaction directions and values are adjusted accordingly.</div>'+
+      '<div style="font-family:monospace;font-size:10px;color:var(--text3);margin-top:4px">Detected in '+_proxyRouterDetected.count+' of '+D.txs.filter(function(tx){return(tx.source||'').toUpperCase().indexOf('JUPITER')>=0;}).length+' Jupiter transactions.</div>'+
+      '</div></div>';
+  }
+
+  // Identity
+  var idSection='';
+  if(D.identity&&D.identity.name){var idColor=isInfrastructure?'var(--amber)':'var(--gtext)';idSection='<div class="section"><div class="sec-hd">Identity</div><div style="padding:14px 24px"><div style="display:flex;justify-content:space-between;font-family:monospace;font-size:11px"><span style="color:var(--text3)">Known entity</span><span style="color:'+idColor+'">'+D.identity.name+(isInfrastructure?' — infrastructure':'')+'</span></div></div></div>';}
+
+  // AI narrative header — verdict + signals only, no metrics
+  var sigRows=(ai.signals||[]).map(function(s){var dotCls=s.color==='green'?'dg':s.color==='red'?'dr':'da';return'<div class="sig"><div class="dot '+dotCls+'"></div><div class="sig-txt">'+s.text+'</div></div>';}).join('');
+  var aiSection='';
+  if(ai.verdict&&ai.verdict.length>2){
+    aiSection='<div class="section" style="margin-bottom:12px">'+
+      '<div style="padding:22px 24px 18px">'+
+        '<div class="w-top" style="margin-bottom:12px"><div class="w-addr">'+wallet+'</div><span class="badge '+ac+'">'+ai.archetypeLabel+'</span></div>'+
+        '<div class="verdict">'+ai.verdict+'</div>'+
+        (ai.verdictSub?'<div class="verdict-sub" style="margin-top:8px">'+ai.verdictSub+'</div>':'')+
+      '</div>'+
+      (sigRows?'<div class="sec-hd" style="border-top:0.5px solid var(--border)">Observations</div><div class="sigs">'+sigRows+'</div>':'')+
+    '</div>';
+  } else {
+    aiSection='<div class="section" style="margin-bottom:12px"><div style="padding:18px 24px"><div class="w-top"><div class="w-addr">'+wallet+'</div></div></div></div>';
+  }
+
+  // Token balances
+  var balRows=[];
+  if(solBal!=null)balRows.push('<div class="bal sol-sep"><div class="bal-l"><div class="bal-sym">SOL</div><div class="bal-amt">'+fmt(solBal,4)+' SOL</div></div><div class="bal-usd">'+(solUsd?fmtUsd(solUsd):'--')+'</div></div>');
+  tokens.forEach(function(t){balRows.push('<div class="bal"><div class="bal-l"><div class="bal-sym">'+(t.symbol||t.mint.slice(0,8))+'</div><div class="bal-amt">'+fmt(t.amount,2)+'</div></div><div class="bal-usd">'+(t.valueUsd?fmtUsd(t.valueUsd):'--')+'</div></div>');});
+
+  // Recent transactions — build all parsed tx objects first, then render with sort/expand
+  function _parseTxForDisplay(tx) {
+    var txType=(tx.type||'').toUpperCase();
+    var isSwap=isTradeLike(tx);
+    var isAirdrop=txType.indexOf('AIRDROP')>=0;
+    var isTransfer=txType.indexOf('TRANSFER')>=0&&!isSwap;
+    var _swapNet=isSwap?netSOLforDisplay(tx,wallet):0;
+    var _isBuyTx=false,_isSellTx=false;
+    if(isSwap){
+      if(_swapNet<-0.0001){_isBuyTx=true;}
+      else if(_swapNet>0.0001){_isSellTx=true;}
+      else{
+        var _st=tx.tokenTransfers||[];
+        var _wA2=getWalletAddrs(tx,wallet);
+        var _sent=_st.filter(function(t){return !!_wA2[t.fromUserAccount]&&t.mint!==WSOL&&!STABLES[t.mint];});
+        var _rec=_st.filter(function(t){return !!_wA2[t.toUserAccount]&&t.mint!==WSOL&&!STABLES[t.mint];});
+        var _stableAny=_st.some(function(t){return !!STABLES[t.mint];});
+        if(_rec.length&&_sent.length){_isBuyTx=true;}
+        else if(_rec.length&&_stableAny){_isBuyTx=true;}
+        else if(_sent.length&&_stableAny){_isSellTx=true;}
+        else if(_sent.length){_isSellTx=true;}
+      }
+    }
+    var icCls=isSwap?(_isBuyTx?'ic-swap':'ic-out'):isAirdrop||isTransfer?'ic-in':'ic-other';
+    var icTxt=isSwap?(_isBuyTx?'BUY':_isSellTx?'SELL':'SWP'):isAirdrop?'AIR':isTransfer?'TRF':(tx.type||'TX').slice(0,3);
+    var pillCls=isSwap?(_isBuyTx?'p-swap':_isSellTx?'p-other':'p-swap'):isAirdrop||isTransfer?'p-transfer':'p-other';
+    var pillTxt=isAirdrop?'airdrop':isTransfer?'transfer':(tx.source||tx.type||'tx').toLowerCase().replace(/_/g,' ').slice(0,12);
+    var desc=isSwap?buildSwapDesc(tx,wallet,D.symCache):(tx.description||tx.type||'Transaction');
+    var hasLink=desc.indexOf('<a ')>=0;
+    var short=hasLink?desc:(desc.length>65?desc.slice(0,65)+'...':desc);
+    var net=isSwap?netSOLforDisplay(tx,wallet):0;
+    var valStr='--';var valCls='neutral';
+    if(Math.abs(net)<0.0001&&isSwap&&desc){
+      var _solInDesc=desc.match(/for ([\d.]+) SOL/i);
+      if(_solInDesc){
+        var _descAmt=parseFloat(_solInDesc[1])||0;
+        if(_descAmt>0.0001){
+          if(desc.indexOf('Sold ')===0||desc.indexOf('Swapped ')===0)net=_descAmt;
+          else if(desc.indexOf('Bought ')===0)net=-_descAmt;
+        }
+      }
+      if(Math.abs(net)<0.0001){
+        var _stableInDesc=desc.match(/for ([\d.]+) (USDC|USDT)/i);
+        if(_stableInDesc){
+          var _stableAmt=parseFloat(_stableInDesc[1])||0;
+          var _stableSym=_stableInDesc[2].toUpperCase();
+          if(_stableAmt>0.0001){
+            var _isSell=desc.indexOf('Sold ')===0||desc.indexOf('Swapped ')===0;
+            valStr=(_isSell?'+':'-')+_stableAmt.toFixed(2)+' '+_stableSym;
+            valCls=_isSell?'pos':'neg';
+          }
+        }
+      }
+    }
+    if(Math.abs(net)>0.0001){valStr=(net>0?'+':'')+net.toFixed(3)+' SOL';valCls=net>0?'pos':'neg';}
+    else if(isSwap){
+      var spendTok=getInputTokenForDisplay(tx,wallet);
+      if(spendTok){
+        function _bestS(t){return t.symbol||STABLES[t.mint]||t.mint.slice(0,8);}
+        valStr='~'+fmtAmt(spendTok.tokenAmount)+' '+_bestS(spendTok);valCls='neg';
+      }
+    }
+    var solscanLink=tx.signature?'<a class="tx-link" href="https://solscan.io/tx/'+tx.signature+'" target="_blank" title="View on Solscan"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 2h4v1.5H3.5v7h7V9H12v4H2V2z" fill="currentColor"/><path d="M7.5 2H12v4.5h-1.5V4.56L6.03 9.03 4.97 7.97l4.47-4.47H7.5V2z" fill="currentColor"/></svg></a>':'<div></div>';
+    return {
+      html:'<div class="tx"><div class="tx-ic '+icCls+'">'+icTxt+'</div><div><div class="tx-desc" title="'+desc.replace(/"/g,'')+'">'+short+'</div><div class="tx-time">'+timeAgo(tx.timestamp)+' · '+(tx.source||tx.type||'')+'</div></div><div class="tx-val '+valCls+'">'+valStr+'</div><div><span class="tx-pill '+pillCls+'">'+pillTxt+'</span></div>'+solscanLink+'</div>',
+      isBuy:_isBuyTx,
+      net:net,
+      timestamp:tx.timestamp||0
+    };
+  }
+
+  // Parse all transactions
+  var _allParsedTxs = D.txs.filter(function(tx){return !isRentTx(tx)&&!tx.transactionError;}).map(_parseTxForDisplay);
+
+  // Store for sort/expand
+  window._wsAllTxs = _allParsedTxs;
+  window._wsTxSort = 'chrono';
+  window._wsTxExpanded = false;
+
+  var TX_PAGE = 50;
+
+  window.wsRenderTxRows = function() {
+    var sorted = window._wsAllTxs.slice();
+    if (window._wsTxSort === 'buys') {
+      // Biggest buys first (most negative net = biggest buy = largest SOL spent)
+      sorted.sort(function(a,b){ return a.net - b.net; });
+    }
+    var showing = window._wsTxExpanded ? sorted : sorted.slice(0, TX_PAGE);
+    var rows = showing.map(function(p){return p.html;}).join('');
+    var hidden = sorted.length - TX_PAGE;
+    var expandBar = '';
+    if (!window._wsTxExpanded && hidden > 0) {
+      expandBar = '<div id="wsTxExpandBar" style="padding:12px 24px;text-align:center;border-top:0.5px solid var(--border);cursor:pointer;font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--text3)" '+
+        'onclick="window._wsTxExpanded=true;document.getElementById(\'wsTxBody\').innerHTML=window.wsRenderTxRows()">'+
+        '+ '+hidden+' more transactions · <span style="color:var(--purple)">show all '+sorted.length+'</span>'+
+        '</div>';
+    } else if (window._wsTxExpanded && sorted.length > TX_PAGE) {
+      expandBar = '<div style="padding:12px 24px;text-align:center;border-top:0.5px solid var(--border);cursor:pointer;font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--text3)" '+
+        'onclick="window._wsTxExpanded=false;document.getElementById(\'wsTxBody\').innerHTML=window.wsRenderTxRows()">'+
+        'Show fewer ↑</div>';
+    }
+    return rows + expandBar;
+  };
+
+  var _txSecHdr = '<div class="sec-hd" style="display:flex;align-items:center;justify-content:space-between">'+
+    '<span>Recent transactions <span class="sec-count">'+D.txs.length+' fetched</span></span>'+
+    '<div style="display:flex;gap:6px">'+
+      '<button id="wsSortChrono" onclick="window._wsTxSort=\'chrono\';window._wsTxExpanded=false;document.getElementById(\'wsTxBody\').innerHTML=window.wsRenderTxRows();document.getElementById(\'wsSortChrono\').style.color=\'var(--green)\';document.getElementById(\'wsSortBuys\').style.color=\'var(--text3)\'" style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;padding:2px 9px;border:0.5px solid var(--border2);border-radius:99px;background:none;color:var(--green);cursor:pointer">Chronological</button>'+
+      '<button id="wsSortBuys" onclick="window._wsTxSort=\'buys\';window._wsTxExpanded=false;document.getElementById(\'wsTxBody\').innerHTML=window.wsRenderTxRows();document.getElementById(\'wsSortBuys\').style.color=\'var(--green)\';document.getElementById(\'wsSortChrono\').style.color=\'var(--text3)\'" style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;padding:2px 9px;border:0.5px solid var(--border2);border-radius:99px;background:none;color:var(--text3);cursor:pointer">Biggest buys</button>'+
+    '</div>'+
+  '</div>';
+
+  el.innerHTML=infraBanner+proxyBanner+aiSection+idSection+
+    '<div class="section"><div class="sec-hd">Current balances</div><div class="bals">'+(balRows.join('')||'<div class="empty">No balances found.</div>')+'</div></div>'+
+    '<div class="section">'+_txSecHdr+'<div style="padding:8px 24px 10px;font-size:9px;color:var(--text3);font-family:\'IBM Plex Mono\',monospace;border-bottom:0.5px solid var(--border)">This site is built using on-chain data only available for FREE. On rare occasions with some Jupiter multi-hop routes, the full trade value may not be available and a partial or fee amount may be shown instead. Please check solscan link on right of tx to confirm details.</div>'+
+    '<div id="wsTxBody">'+(window.wsRenderTxRows()||'<div class="empty">No transactions found.</div>')+'</div></div>'+
+    '<div class="rfooter"><div class="cost" style="font-family:monospace;font-size:10px;color:var(--text3)">Wallet Story · Helius · Solana mainnet · Not financial advice</div></div>';
+  el.style.display='block';
+  setTimeout(function(){el.scrollIntoView({behavior:'smooth',block:'start'});},50);
+}
+function profileWallet(addr){
+  switchMode('wallet');
+  document.getElementById('walletInput').value=addr;
+  window.scrollTo({top:0,behavior:'smooth'});
+  showDepthPicker(addr);
+}
+
+// ─────────────────────────────────────────────
+// WATCHLIST
+// ─────────────────────────────────────────────
+var watchlist = [];
+var pollInterval = null;
+var pollRunning = false;
+var alertHistory = []; // recent alerts
+
+function loadWatchlist() {
+  try {
+    var saved = localStorage.getItem('ws_watchlist');
+    watchlist = saved ? JSON.parse(saved) : [];
+  } catch(e) { watchlist = []; }
+}
+
+function saveWatchlist() {
+  try { localStorage.setItem('ws_watchlist', JSON.stringify(watchlist)); } catch(e) {}
+}
+
+function addToWatchlist() {
+  var addr = document.getElementById('watchAddr').value.trim();
+  var nick = document.getElementById('watchNick').value.trim();
+  var alertBuys     = document.getElementById('watchAlertBuys').checked;
+  var alertSells    = document.getElementById('watchAlertSells').checked;
+  var alertDeposits = document.getElementById('watchAlertDeposits').checked;
+  var minSolBuys     = parseFloat(document.getElementById('watchMinSolBuys').value) || 0;
+  var minSolSells    = parseFloat(document.getElementById('watchMinSolSells').value) || 0;
+  var minSolDeposits = parseFloat(document.getElementById('watchMinSolDeposits').value) || 1;
+  var msg = document.getElementById('watchAddMsg');
+
+  if (!addr || addr.length < 32) {
+    msg.textContent = 'Enter a valid wallet address';
+    msg.style.color = 'var(--red)';
+    return;
+  }
+  if (!alertBuys && !alertSells && !alertDeposits) {
+    msg.textContent = 'Tick at least one alert type';
+    msg.style.color = 'var(--amber)';
+    return;
+  }
+  if (watchlist.find(function(w) { return w.address === addr; })) {
+    msg.textContent = 'Already in watchlist';
+    msg.style.color = 'var(--amber)';
+    return;
+  }
+
+  watchlist.push({
+    address: addr,
+    nickname: nick || shortAddr(addr),
+    alertBuys: alertBuys,
+    alertSells: alertSells,
+    alertDeposits: alertDeposits,
+    minSolBuys: minSolBuys,
+    minSolSells: minSolSells,
+    minSolDeposits: minSolDeposits,
+    // legacy compat
+    filter: alertBuys && alertSells ? 'both' : alertBuys ? 'buys' : alertSells ? 'sells' : 'both',
+    minSol: minSolBuys,
+    addedAt: Date.now(),
+    lastSig: null,
+    lastCheck: null,
+    lastActivity: null,
+    status: 'unchecked'
+  });
+  saveWatchlist();
+
+  document.getElementById('watchAddr').value = '';
+  document.getElementById('watchNick').value = '';
+  document.getElementById('watchAlertBuys').checked = true;
+  document.getElementById('watchAlertSells').checked = false;
+  document.getElementById('watchAlertDeposits').checked = false;
+  msg.textContent = 'Added!';
+  msg.style.color = 'var(--gtext)';
+  setTimeout(function() { msg.textContent = ''; }, 2000);
+  renderWatchlist();
+}
+
+function removeFromWatchlist(addr) {
+  watchlist = watchlist.filter(function(w) { return w.address !== addr; });
+  saveWatchlist();
+  if (watchlist.length === 0 && pollRunning) togglePolling();
+  renderWatchlist();
+}
+
+function renderWatchlist() {
+  var listEl = document.getElementById('watchList');
+  var ctrlEl = document.getElementById('watchControls');
+
+  if (watchlist.length === 0) {
+    listEl.innerHTML = '<div class="empty" style="padding:24px;text-align:center;color:var(--text3)">No wallets in watchlist yet. Add one above.</div>';
+    ctrlEl.style.display = 'none';
+    return;
+  }
+  ctrlEl.style.display = 'flex';
+  ctrlEl.style.flexDirection = 'column';
+
+  var cards = watchlist.map(function(w, i) {
+    var statusDot = w.status === 'active' ? 'var(--green)' : w.status === 'error' ? 'var(--red)' : 'var(--text3)';
+    var lastCheck = w.lastCheck ? timeAgo(w.lastCheck/1000) : 'never checked';
+
+    // Build per-type badges — handle both new format and legacy entries
+    var badges = '';
+    var alertBuys     = w.alertBuys !== undefined ? w.alertBuys : (w.filter === 'buys' || w.filter === 'both');
+    var alertSells    = w.alertSells !== undefined ? w.alertSells : (w.filter === 'sells' || w.filter === 'both');
+    var alertDeposits = w.alertDeposits || false;
+    var minSolBuys     = w.minSolBuys !== undefined ? w.minSolBuys : (w.minSol || 0);
+    var minSolSells    = w.minSolSells !== undefined ? w.minSolSells : (w.minSol || 0);
+    var minSolDeposits = w.minSolDeposits || 1;
+
+    if (alertBuys)     badges += '<span style="font-family:monospace;font-size:9px;padding:2px 8px;background:var(--gdim);color:var(--gtext);border-radius:99px;margin-right:4px">buys' + (minSolBuys > 0 ? ' >' + minSolBuys + ' SOL' : '') + '</span>';
+    if (alertSells)    badges += '<span style="font-family:monospace;font-size:9px;padding:2px 8px;background:var(--rdim);color:var(--rtext);border-radius:99px;margin-right:4px">sells' + (minSolSells > 0 ? ' >' + minSolSells + ' SOL' : '') + '</span>';
+    if (alertDeposits) badges += '<span style="font-family:monospace;font-size:9px;padding:2px 8px;background:var(--bdim);color:var(--btext);border-radius:99px;margin-right:4px">deposits >' + minSolDeposits + ' SOL</span>';
+
+    var actHtml = w.lastActivity ? '<div style="margin-top:6px;font-size:11px;color:var(--text2)">' + w.lastActivity.desc + '</div>' : '';
+    return '<div class="section" style="margin-bottom:10px">' +
+      '<div style="padding:14px 20px;display:flex;align-items:center;gap:14px">' +
+        '<div style="width:8px;height:8px;border-radius:50%;background:' + statusDot + ';flex-shrink:0"></div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">' +
+            '<div style="font-size:14px;font-weight:700">' + w.nickname + '</div>' +
+            '<div style="font-family:monospace;font-size:10px;color:var(--text3)">' + shortAddr(w.address) + '</div>' +
+            badges +
+          '</div>' +
+          '<div style="font-family:monospace;font-size:10px;color:var(--text3)">Last checked: ' + lastCheck + '</div>' +
+          actHtml +
+        '</div>' +
+        '<div style="display:flex;gap:8px;flex-shrink:0">' +
+          '<button data-idx="' + i + '" class="wl-scan-btn" style="font-family:monospace;font-size:10px;padding:5px 12px;border:none;border-radius:6px;color:#050505;background:var(--amber);cursor:pointer;font-weight:600">Scan</button>' +
+          '<button data-idx="' + i + '" class="wl-check-btn" style="font-family:monospace;font-size:10px;padding:5px 12px;border:0.5px solid var(--border2);border-radius:6px;color:var(--text2);background:none;cursor:pointer">Check now</button>' +
+          '<button data-addr="' + w.address + '" class="wl-profile-btn transfer-btn" style="font-size:10px;padding:5px 12px">Full profile</button>' +
+          '<button data-addr="' + w.address + '" class="wl-remove-btn" style="font-family:monospace;font-size:10px;padding:5px 10px;border:0.5px solid rgba(255,92,92,0.3);border-radius:6px;color:var(--rtext);background:none;cursor:pointer">Remove</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  });
+  listEl.innerHTML = cards.join('');
+
+  // Attach event listeners after render
+  listEl.querySelectorAll('.wl-scan-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() { scanWallet(parseInt(this.dataset.idx)); });
+  });
+  listEl.querySelectorAll('.wl-check-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() { checkWallet(parseInt(this.dataset.idx)); });
+  });
+  listEl.querySelectorAll('.wl-profile-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() { profileWallet(this.dataset.addr); });
+  });
+  listEl.querySelectorAll('.wl-remove-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() { removeFromWatchlist(this.dataset.addr); });
+  });
+}
+
+async function checkWallet(idx) {
+  var w = watchlist[idx];
+  if (!w) return;
+  var hKey = document.getElementById('heliusKey').value.trim();
+  if (!hKey) return;
+
+  w.status = 'checking';
+  w.lastCheck = Date.now();
+  renderWatchlist();
+
+  try {
+    // Fetch last 10 transactions for this wallet
+    var url = 'https://api.helius.xyz/v0/addresses/' + w.address + '/transactions?limit=10&api-key=' + hKey;
+    var r = await fetch(url);
+    if (!r.ok) { w.status = 'error'; saveWatchlist(); renderWatchlist(); return; }
+    var txs = await r.json();
+    if (!Array.isArray(txs) || txs.length === 0) { w.status = 'active'; saveWatchlist(); renderWatchlist(); return; }
+
+    var newestSig = txs[0].signature;
+    var isFirstCheck = !w.lastSig;
+
+    // Find new transactions since last check
+    var newTxs = [];
+    if (w.lastSig) {
+      for (var i = 0; i < txs.length; i++) {
+        if (txs[i].signature === w.lastSig) break;
+        newTxs.push(txs[i]);
+      }
+    }
+
+    w.lastSig = newestSig;
+    w.status = 'active';
+
+    if (newTxs.length > 0 && !isFirstCheck) {
+      // Resolve alert settings — handle legacy entries gracefully
+      var doAlertBuys     = w.alertBuys !== undefined ? w.alertBuys : (w.filter === 'buys' || w.filter === 'both');
+      var doAlertSells    = w.alertSells !== undefined ? w.alertSells : (w.filter === 'sells' || w.filter === 'both');
+      var doAlertDeposits = w.alertDeposits || false;
+      var minSolBuys      = w.minSolBuys !== undefined ? w.minSolBuys : (w.minSol || 0);
+      var minSolSells     = w.minSolSells !== undefined ? w.minSolSells : (w.minSol || 0);
+      var minSolDeposits  = w.minSolDeposits || 1;
+
+      newTxs.forEach(function(tx) {
+        if (tx.transactionError) return;
+
+        var nt = tx.nativeTransfers || [];
+        var tt = tx.tokenTransfers || [];
+
+        // ── DEPOSIT CHECK ──────────────────────────────────────────
+        if (doAlertDeposits) {
+          // A deposit is a native SOL transfer INTO this wallet that is NOT a swap fee refund.
+          // We exclude transactions that are swaps — those are buy/sell events, not pure deposits.
+          var isSwapTx = isTradeLike(tx);
+
+          if (!isSwapTx) {
+            var depositSOL = nt
+              .filter(function(n) { return n.toUserAccount === w.address && n.amount >= 100000; })
+              .reduce(function(a, n) { return a + (n.amount / 1e9); }, 0);
+
+            if (depositSOL >= minSolDeposits) {
+              var depDesc = 'Received ' + depositSOL.toFixed(3) + ' SOL';
+              // Try to identify sender
+              var senders = nt.filter(function(n) { return n.toUserAccount === w.address && n.amount >= 100000; });
+              if (senders.length && senders[0].fromUserAccount) {
+                depDesc += ' from ' + shortAddr(senders[0].fromUserAccount);
+              }
+              w.lastActivity = { desc: 'DEPOSIT: ' + depDesc, ts: tx.timestamp, type: 'deposit', address: w.address };
+              fireAlert(w, depDesc, 'deposit', tx.timestamp, tx.signature);
+            }
+          }
+        }
+
+        // ── BUY / SELL CHECK ───────────────────────────────────────
+        if (doAlertBuys || doAlertSells) {
+          var isSwap = isTradeLike(tx);
+          if (!isSwap) return;
+
+          // Use netSOLforDisplay — handles DFlow/Jupiter router, WSOL, swap events
+          var netSOL = netSOLforDisplay(tx, w.address);
+          tx._netSOL = netSOL;
+
+          var isBuy  = netSOL < -0.001;
+          var isSell = netSOL > 0.001;
+
+          // Token→token or token→stablecoin: netSOL=0, determine direction from token flows
+          var isNoSOL = !isBuy && !isSell;
+          if (isNoSOL) {
+            var _wA=getWalletAddrs(tx,w.address);
+            var sentToks = tt.filter(function(t){ return !!_wA[t.fromUserAccount]&&t.mint!==WSOL; });
+            var recToks  = tt.filter(function(t){ return !!_wA[t.toUserAccount]&&t.mint!==WSOL; });
+            var stableAnywhere = tt.some(function(t){ return !!STABLES[t.mint]; });
+            if(sentToks.length && recToks.length) { isBuy = true; }
+            else if(sentToks.length && stableAnywhere) { isSell = true; }
+            else if(recToks.length && stableAnywhere) { isBuy = true; }
+          }
+
+          var desc = buildSwapDesc(tx, w.address, {});
+          if (!desc || desc === 'Transaction') desc = tx.description || tx.type || 'Transaction';
+
+          if (isBuy && doAlertBuys && (isNoSOL || Math.abs(netSOL) >= minSolBuys)) {
+            w.lastActivity = { desc: 'BUY: ' + desc, ts: tx.timestamp, type: 'buy', address: w.address };
+            fireAlert(w, desc, 'buy', tx.timestamp, tx.signature);
+          } else if (isSell && doAlertSells && (isNoSOL || Math.abs(netSOL) >= minSolSells)) {
+            w.lastActivity = { desc: 'SELL: ' + desc, ts: tx.timestamp, type: 'sell', address: w.address };
+            fireAlert(w, desc, 'sell', tx.timestamp, tx.signature);
+          }
+        }
+      });
+    } else if (isFirstCheck && txs.length > 0) {
+      // First check - just record the latest sig, no alert
+      var tx = txs[0];
+      w.lastActivity = { desc: 'Watching from here — ' + timeAgo(tx.timestamp), ts: tx.timestamp };
+    }
+
+    saveWatchlist();
+    renderWatchlist();
+  } catch(e) {
+    w.status = 'error';
+    console.warn('Watch check error for', w.address.slice(0,8), e.message);
+    saveWatchlist();
+    renderWatchlist();
+  }
+}
+
+async function checkAllNow() {
+  for (var i = 0; i < watchlist.length; i++) {
+    await checkWallet(i);
+    await new Promise(function(res) { setTimeout(res, 400); }); // small delay between wallets
+  }
+}
+
+// ─── SCAN BACK ────────────────────────────────────────────────────────────────
+// Fetches all transactions within a time window for a wallet and fires matching alerts.
+// Unlike checkWallet (which only looks at txs since last poll), scanWallet ignores
+// lastSig entirely and works purely off timestamps.
+
+async function scanWallet(idx, fromTs, toTs, isBatchScan) {
+  var w = watchlist[idx];
+  if (!w) return;
+  var hKey = document.getElementById('heliusKey').value.trim();
+  if (!hKey) return;
+
+  // Default time window from the scan period dropdown
+  if (!fromTs) {
+    var hours = parseInt(document.getElementById('scanPeriod').value) || 1;
+    toTs   = Math.floor(Date.now() / 1000);
+    fromTs = toTs - (hours * 3600);
+  }
+
+  if (!isBatchScan) {
+    document.getElementById('scanStatus').textContent = 'Scanning ' + w.nickname + '...';
+  }
+
+  w.status = 'checking';
+  renderWatchlist();
+
+  try {
+    // Fetch enough pages to cover the time window — up to 500 txs
+    var all = [];
+    var before = null;
+    var maxPages = 5; // 500 txs max per wallet per scan
+
+    for (var p = 0; p < maxPages; p++) {
+      var url = 'https://api.helius.xyz/v0/addresses/' + w.address + '/transactions?limit=100&api-key=' + hKey;
+      if (before) url += '&before=' + before;
+
+      var r = await fetch(url);
+      if (!r.ok) break;
+      var batch = await r.json();
+      if (!Array.isArray(batch) || batch.length === 0) break;
+
+      // Filter to our time window
+      var inWindow = batch.filter(function(tx) { return tx.timestamp >= fromTs && tx.timestamp <= toTs; });
+      all = all.concat(inWindow);
+
+      // If the oldest tx in this batch is already before our window, stop fetching
+      var oldest = batch[batch.length - 1];
+      if (oldest && oldest.timestamp < fromTs) break;
+      if (batch.length < 100) break;
+
+      before = oldest.signature;
+      await new Promise(function(res) { setTimeout(res, 300); });
+    }
+
+    w.status = 'active';
+
+    if (all.length === 0) {
+      if (!isBatchScan) document.getElementById('scanStatus').textContent = w.nickname + ': no activity in window';
+      saveWatchlist();
+      renderWatchlist();
+      return;
+    }
+
+    // Run the same alert logic as checkWallet but across all fetched txs
+    var doAlertBuys     = w.alertBuys !== undefined ? w.alertBuys : (w.filter === 'buys' || w.filter === 'both');
+    var doAlertSells    = w.alertSells !== undefined ? w.alertSells : (w.filter === 'sells' || w.filter === 'both');
+    var doAlertDeposits = w.alertDeposits || false;
+    var minSolBuys      = w.minSolBuys !== undefined ? w.minSolBuys : (w.minSol || 0);
+    var minSolSells     = w.minSolSells !== undefined ? w.minSolSells : (w.minSol || 0);
+    var minSolDeposits  = w.minSolDeposits || 1;
+
+    var alertsFired = 0;
+
+    // Sort oldest-first so alert feed reads chronologically
+    all.sort(function(a, b) { return a.timestamp - b.timestamp; });
+
+    all.forEach(function(tx) {
+      if (tx.transactionError) return;
+      var nt = tx.nativeTransfers || [];
+      var tt = tx.tokenTransfers || [];
+
+      // DEPOSIT CHECK
+      if (doAlertDeposits) {
+        var isSwapTx = isTradeLike(tx);
+        if (!isSwapTx) {
+          var depositSOL = nt
+            .filter(function(n) { return n.toUserAccount === w.address && n.amount >= 100000; })
+            .reduce(function(a, n) { return a + (n.amount / 1e9); }, 0);
+          if (depositSOL >= minSolDeposits) {
+            var depDesc = 'Received ' + depositSOL.toFixed(3) + ' SOL';
+            var senders = nt.filter(function(n) { return n.toUserAccount === w.address && n.amount >= 100000; });
+            if (senders.length && senders[0].fromUserAccount) depDesc += ' from ' + shortAddr(senders[0].fromUserAccount);
+            fireAlert(w, depDesc, 'deposit', tx.timestamp, tx.signature);
+            alertsFired++;
+          }
+        }
+      }
+
+      // BUY / SELL CHECK
+      if (doAlertBuys || doAlertSells) {
+        var isSwap = isTradeLike(tx);
+        if (!isSwap) return;
+
+        // Use netSOLforDisplay — handles DFlow/Jupiter router, WSOL, swap events
+        var netSOL = netSOLforDisplay(tx, w.address);
+        tx._netSOL = netSOL;
+
+        var isBuy  = netSOL < -0.001;
+        var isSell = netSOL > 0.001;
+
+        // Token→token or token→stablecoin: netSOL=0, determine direction from token flows
+        var isNoSOL = !isBuy && !isSell;
+        if (isNoSOL) {
+          var _wA=getWalletAddrs(tx,w.address);
+          var sentToks = tt.filter(function(t){ return !!_wA[t.fromUserAccount]&&t.mint!==WSOL; });
+          var recToks  = tt.filter(function(t){ return !!_wA[t.toUserAccount]&&t.mint!==WSOL; });
+          var stableAnywhere = tt.some(function(t){ return !!STABLES[t.mint]; });
+          if(sentToks.length && recToks.length) { isBuy = true; }
+          else if(sentToks.length && stableAnywhere) { isSell = true; }
+          else if(recToks.length && stableAnywhere) { isBuy = true; }
+        }
+
+        var desc = buildSwapDesc(tx, w.address, {});
+        if (!desc || desc === 'Transaction') desc = tx.description || tx.type || 'Transaction';
+
+        if (isBuy && doAlertBuys && (isNoSOL || Math.abs(netSOL) >= minSolBuys)) {
+          fireAlert(w, desc, 'buy', tx.timestamp, tx.signature);
+          alertsFired++;
+        } else if (isSell && doAlertSells && (isNoSOL || Math.abs(netSOL) >= minSolSells)) {
+          fireAlert(w, desc, 'sell', tx.timestamp, tx.signature);
+          alertsFired++;
+        }
+      }
+    });
+
+    if (!isBatchScan) {
+      var label = alertsFired === 0 ? 'no matches' : alertsFired + ' alert' + (alertsFired > 1 ? 's' : '') + ' found';
+      document.getElementById('scanStatus').textContent = w.nickname + ': ' + label;
+    }
+
+    saveWatchlist();
+    renderWatchlist();
+
+  } catch(e) {
+    w.status = 'error';
+    console.warn('Scan error for', w.address.slice(0,8), e.message);
+    if (!isBatchScan) document.getElementById('scanStatus').textContent = 'Error scanning ' + w.nickname;
+    saveWatchlist();
+    renderWatchlist();
+  }
+}
+
+async function scanAllWallets() {
+  if (watchlist.length === 0) return;
+  var hours  = parseInt(document.getElementById('scanPeriod').value) || 1;
+  var toTs   = Math.floor(Date.now() / 1000);
+  var fromTs = toTs - (hours * 3600);
+  var statusEl = document.getElementById('scanStatus');
+  statusEl.textContent = 'Scanning ' + watchlist.length + ' wallet' + (watchlist.length > 1 ? 's' : '') + '...';
+
+  for (var i = 0; i < watchlist.length; i++) {
+    statusEl.textContent = 'Scanning ' + (i + 1) + ' / ' + watchlist.length + ' — ' + watchlist[i].nickname + '...';
+    await scanWallet(i, fromTs, toTs, true);
+    await new Promise(function(res) { setTimeout(res, 500); });
+  }
+
+  var total = alertHistory.length;
+  statusEl.textContent = 'Scan complete — ' + total + ' alert' + (total !== 1 ? 's' : '') + ' in feed';
+}
+
+function fireAlert(w, desc, type, txTimestamp, txSig) {
+  type = type || 'buy';
+  // Use actual tx time for scan results, current time for live alerts
+  var alertTs = txTimestamp ? (txTimestamp * 1000) : Date.now();
+  var alert = { wallet: w.nickname, address: w.address, desc: desc, ts: alertTs, type: type, sig: txSig || null };
+  alertHistory.unshift(alert);
+  if (alertHistory.length > 50) alertHistory.pop();
+
+  // Update badge
+  var badge = document.getElementById('watchBadge');
+  badge.style.display = 'inline';
+  badge.textContent = alertHistory.length;
+
+  // Show in-app alert bar
+  renderAlerts();
+
+  // Browser notification
+  var typeLabel = type === 'deposit' ? 'DEPOSIT' : type === 'sell' ? 'SELL' : 'BUY';
+  if (Notification && Notification.permission === 'granted') {
+    new Notification('Wallet Story — ' + typeLabel, {
+      body: w.nickname + ': ' + desc,
+      icon: '/favicon.ico'
+    });
+  }
+}
+
+function renderAlerts() {
+  var el = document.getElementById('watchAlerts');
+  if (alertHistory.length === 0) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+
+  var rows = alertHistory.slice(0, 20).map(function(a) {
+    var type = a.type || 'buy';
+    var typeLabel = type === 'deposit' ? 'DEPOSIT' : type === 'sell' ? 'SELL' : 'BUY';
+    var pillBg   = type === 'deposit' ? 'var(--bdim)'  : type === 'sell' ? 'var(--rdim)'  : 'var(--gdim)';
+    var pillCol  = type === 'deposit' ? 'var(--btext)' : type === 'sell' ? 'var(--rtext)' : 'var(--gtext)';
+    var borderCol= type === 'deposit' ? 'rgba(59,130,246,0.15)' : type === 'sell' ? 'rgba(255,92,92,0.1)' : 'rgba(20,241,149,0.1)';
+
+    return '<div style="padding:7px 0;border-bottom:0.5px solid ' + borderCol + '">' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:3px">' +
+        '<span style="font-family:monospace;font-size:9px;font-weight:700;padding:1px 7px;background:' + pillBg + ';color:' + pillCol + ';border-radius:99px">' + typeLabel + '</span>' +
+        '<a href="https://solscan.io/account/' + a.address + '" target="_blank" style="font-family:monospace;font-size:10px;color:var(--rtext);text-decoration:underline;text-decoration-style:dotted;flex-shrink:0">' + a.wallet + ' (' + shortAddr(a.address) + ')</a>' +
+        '<div style="font-family:monospace;font-size:9px;color:var(--text3);margin-left:auto">' + new Date(a.ts).toLocaleString(undefined, {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}) + '</div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">' +
+        '<div style="font-size:12px;color:var(--text2)">' + a.desc + '</div>' +
+        (a.sig ? '<a href="https://solscan.io/tx/' + a.sig + '" target="_blank" style="font-family:monospace;font-size:9px;color:var(--text3);text-decoration:none;border:0.5px solid var(--border);border-radius:4px;padding:2px 7px;white-space:nowrap;flex-shrink:0" onmouseover="this.style.color=\'var(--text)\'" onmouseout="this.style.color=\'var(--text3)\'">TX ↗</a>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  el.innerHTML = '<div style="background:var(--rdim);border:0.5px solid rgba(255,92,92,0.25);border-radius:var(--r);padding:12px 20px;margin-bottom:12px">' +
+    '<div style="font-family:monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.07em;color:var(--rtext);margin-bottom:8px">Recent alerts</div>' +
+    rows +
+    '<div style="margin-top:8px;text-align:right"><button class="wl-clear-alerts" style="font-family:monospace;font-size:10px;color:var(--text3);background:none;border:none;cursor:pointer">Clear alerts</button></div>' +
+  '</div>';
+
+  var clearBtn = el.querySelector('.wl-clear-alerts');
+  if (clearBtn) clearBtn.addEventListener('click', function() {
+    alertHistory = [];
+    renderAlerts();
+    document.getElementById('watchBadge').style.display = 'none';
+  });
+}
+
+function togglePolling() {
+  if (pollRunning) {
+    clearInterval(pollInterval);
+    pollRunning = false;
+    document.getElementById('pollBtn').textContent = 'Start alerts';
+    document.getElementById('pollBtn').style.background = 'var(--green)';
+    document.getElementById('pollStatus').textContent = 'Polling paused';
+  } else {
+    // Request notification permission
+    if (Notification && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+    pollRunning = true;
+    document.getElementById('pollBtn').textContent = 'Stop alerts';
+    document.getElementById('pollBtn').style.background = 'var(--red)';
+    document.getElementById('pollStatus').textContent = 'Seeding — recording chain position…';
+
+    // Clear lastSig for all wallets so the first poll seeds from NOW,
+    // preventing old/historical txs from surfacing as live alerts.
+    watchlist.forEach(function(w) { w.lastSig = null; });
+    saveWatchlist();
+
+    // Run immediately (seeds lastSig only, no alerts fired) then every 60 seconds
+    checkAllNow().then(function() {
+      if (!pollRunning) return;
+      document.getElementById('pollStatus').textContent = 'Checking every 60s...';
+    });
+    pollInterval = setInterval(function() {
+      checkAllNow();
+      document.getElementById('pollStatus').textContent = 'Last checked: ' + new Date().toLocaleTimeString();
+    }, 60000);
+  }
+}
+
+// Load watchlist on startup
+loadWatchlist();
+</script>
+</body>
+</html>
